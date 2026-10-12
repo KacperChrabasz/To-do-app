@@ -1,12 +1,50 @@
+:root {
+  --bg-start: #eef1ff;
+  --bg-end: #f8eefc;
+  --card: #ffffff;
+  --text: #1f2430;
+  --muted: #8a90a0;
+  --accent: #5b6cff;
+  --border: #e4e6ee;
+}
+
+:root[data-theme="dark"] {
+  --card: #1c1f2a;
+  --text: #eceef5;
+  --muted: #8b91a3;
+  --accent: #7d8aff;
+  --border: #2a2e3c;
+}
+
+/* ---------- BASE ---------- */
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  background: #f3f4f8;
-  color: #162e66;
+  min-height: 100vh;
+  color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+  background-attachment: fixed;
+  transition: color 0.4s ease;
+}
+
+/* Dark gradient sits behind everything and fades in/out.
+   (Gradients can't be animated directly, so we fade this layer instead.) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(135deg, #0f1220, #1d1633);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+:root[data-theme="dark"] body::before {
+  opacity: 1;
 }
 
 .app {
@@ -19,6 +57,7 @@ h1 {
   margin-top: 0;
 }
 
+/* ---------- ADD FORM ---------- */
 .add-row {
   display: flex;
   gap: 8px;
@@ -30,16 +69,24 @@ h1 {
   min-width: 0;
   padding: 14px;
   font-size: 16px;
-  border: 1px solid #e4e6ee;
+  border: 1px solid var(--border);
   border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+}
+
+.add-row input:focus {
+  outline: 2px solid var(--accent);
 }
 
 .add-row button {
   padding: 0 20px;
   border: none;
   border-radius: 12px;
-  background: #5b6cff;
+  background: var(--accent);
   color: white;
   font-size: 1.5rem;
   cursor: pointer;
+  transition: background 0.4s ease;
 }
