@@ -10,20 +10,35 @@
   <div class="app">
 
     <header>
-      <h1>My Tasks</h1>
+      <div>
+        <h1>My Tasks</h1>
+        <div class="subtitle" id="counter"></div>
+      </div>
 
       <label class="switch" aria-label="Toggle dark mode">
         <input type="checkbox" id="themeToggle">
         <span class="slider"></span>
       </label>
     </header>
-      
+
     <div class="add-row">
-      <input type="text" id="taskInput" placeholder="Add a new task...">
-      <button id="addBtn">+</button>
+      <input type="text" id="taskInput" placeholder="Add a new task..." maxlength="100" autocomplete="off">
+      <button id="addBtn" aria-label="Add task">+</button>
+    </div>
+
+    <div class="filters">
+      <button data-filter="all" class="active">All</button>
+      <button data-filter="active">Active</button>
+      <button data-filter="completed">Done</button>
     </div>
 
     <ul id="taskList"></ul>
+
+    <footer>
+      <span id="footerInfo"></span>
+      <button id="clearBtn">Clear completed</button>
+    </footer>
+
   </div>
 
   <script src="script.js"></script>
