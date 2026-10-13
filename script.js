@@ -5,7 +5,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ---------- FIREBASE SETUP ----------
-// PASTE YOUR OWN VALUES FROM FIREBASE PROJECT SETTINGS
 const firebaseConfig = {
   apiKey: "AIzaSyBv1Q7tdkMOoh9z3WXkT7LowVsSdWTMOtA",
   authDomain: "todo-app-ffbf1.firebaseapp.com",
@@ -17,7 +16,26 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const tasksRef = collection(db, "tasks");
+
+// ---------- GROUP (LIST) ID ----------
+// The list id lives in the link, e.g. index.html?list=k3j9x2
+function getListId() {
+  const params = new URLSearchParams(window.location.search);
+  let id = params.get("list");
+
+  if (!id) {
+    id = Math.random().toString(36).substring(2, 10);
+    window.history.replaceState({}, "", "?list=" + id);
+  }
+  return id;
+}
+
+const listId = getListId();
+const tasksRef = collection(db, "lists", listId, "tasks");
+
+function taskDoc(id) {
+  return doc(db, "lists", listId, "tasks", id);
+}
 
 // ---------- DARK MODE ----------
 const themeToggle = document.getElementById("themeToggle");
@@ -47,9 +65,10 @@ const counter = document.getElementById("counter");
 const footerInfo = document.getElementById("footerInfo");
 const clearBtn = document.getElementById("clearBtn");
 const filterButtons = document.querySelectorAll(".filters button");
+const shareBtn = document.getElementById("shareBtn");
+const newListBtn = document.getElementById("newListBtn");
 
 // ---------- DATA ----------
-// Each task is { id, text, done, createdAt }. The list is filled from Firebase.
 let tasks = [];
 let currentFilter = "all";
 
@@ -73,28 +92,58 @@ async function addTask() {
 }
 
 async function toggleTask(task) {
-  await updateDoc(doc(db, "tasks", task.id), { done: !task.done });
+  await updateDoc(taskDoc(task.id), { done: !task.done });
 }
 
 async function deleteTask(id) {
-  await deleteDoc(doc(db, "tasks", id));
+  await deleteDoc(taskDoc(id));
 }
 
 async function editTask(task) {
   const newText = prompt("Edit task:", task.text);
 
   if (newText !== null && newText.trim() !== "") {
-    await updateDoc(doc(db, "tasks", task.id), { text: newText.trim() });
+    await updateDoc(taskDoc(task.id), { text: newText.trim() });
   }
 }
 
 async function clearCompleted() {
   const completed = tasks.filter(t => t.done);
-  await Promise.all(completed.map(t => deleteDoc(doc(db, "tasks", t.id))));
+  await Promise.all(completed.map(t => deleteDoc(taskDoc(t.id))));
 }
 
+// ---------- INVITE LINK ----------
+// Builds the link from this list's id, e.g. https://your-site/?list=k3j9x2
+function getInviteLink() {
+  return window.location.origin + window.location.pathname + "?list=" + listId;
+}
+
+shareBtn.addEventListener("click", async () => {
+  const link = getInviteLink();
+
+  try {
+    await navigator.clipboard.writeText(link);
+    shareBtn.textContent = "✅ Link copied!";
+  } catch (e) {
+    // If the browser blocks copying, show the link so it can be copied by hand
+    prompt("Copy this link and send it to your group:", link);
+  }
+
+  setTimeout(() => {
+    shareBtn.textContent = "🔗 Copy invite link";
+  }, 2000);
+});
+
+// ---------- NEW LIST BUTTON ----------
+newListBtn.addEventListener("click", () => {
+  // make a random list id, like "k3j9x2"
+  const newId = Math.random().toString(36).substring(2, 10);
+
+  // open the same page with the new id in the link
+  window.location.href = window.location.pathname + "?list=" + newId;
+});
+
 // ---------- RENDER ----------
-// Redraws the whole list from the tasks array
 function render() {
   taskList.innerHTML = "";
 
@@ -145,7 +194,6 @@ function render() {
 }
 
 // ---------- REAL-TIME LISTENER ----------
-// Runs once at start, then again every time anyone changes the list
 const q = query(tasksRef, orderBy("createdAt"));
 onSnapshot(q, snapshot => {
   tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
