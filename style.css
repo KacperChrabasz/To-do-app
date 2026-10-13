@@ -56,6 +56,18 @@ body::before {
   padding: 20px 16px 40px;
 }
 
+/* ---------- ALL BUTTONS (shared look) ---------- */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.4s ease, border-color 0.4s ease, opacity 0.2s ease;
+}
+
+/* small squish when pressed, feels more like a phone app */
+button:active {
+  transform: scale(0.96);
+}
+
 /* ---------- HEADER + SWITCH ---------- */
 header {
   display: flex;
@@ -123,6 +135,29 @@ h1 {
   transform: translateX(26px);
 }
 
+/* ---------- SHARE ROW (invite link + new list) ---------- */
+.share-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.share-row button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.share-row button:hover {
+  border-color: var(--accent);
+}
+
 /* ---------- ADD FORM ---------- */
 .add-row {
   display: flex;
@@ -146,17 +181,20 @@ h1 {
   outline: 2px solid var(--accent);
 }
 
+/* the + button */
 .add-row button {
-  padding: 0 20px;
+  width: 52px;
+  padding: 0;
   border: none;
   border-radius: 12px;
   background: var(--accent);
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(91, 108, 255, 0.35);
 }
 
-/* ---------- FILTERS ---------- */
+/* ---------- FILTERS (All / Active / Done) ---------- */
 .filters {
   display: flex;
   gap: 8px;
@@ -171,7 +209,7 @@ h1 {
   background: var(--card);
   color: var(--muted);
   font-size: 0.9rem;
-  cursor: pointer;
+  font-weight: 600;
 }
 
 .filters button.active {
@@ -216,14 +254,19 @@ li.done .text {
   color: var(--muted);
 }
 
+/* ✏️ and 🗑️ buttons on each task */
 li button {
   background: none;
   border: none;
   font-size: 1.1rem;
-  cursor: pointer;
   width: 36px;
   height: 36px;
+  border-radius: 8px;
   flex-shrink: 0;
+}
+
+li button:hover {
+  background: var(--border);
 }
 
 .empty {
@@ -247,6 +290,6 @@ footer button {
   border: none;
   color: var(--danger);
   font-size: 0.9rem;
-  cursor: pointer;
+  font-weight: 600;
   padding: 8px;
 }
