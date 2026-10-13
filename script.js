@@ -1,3 +1,24 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, deleteDoc, updateDoc,
+  doc, onSnapshot, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ---------- FIREBASE SETUP ----------
+// PASTE YOUR OWN VALUES FROM FIREBASE PROJECT SETTINGS
+const firebaseConfig = {
+  apiKey: "AIzaSyBv1Q7tdkMOoh9z3WXkT7LowVsSdWTMOtA",
+  authDomain: "todo-app-ffbf1.firebaseapp.com",
+  projectId: "todo-app-ffbf1",
+  storageBucket: "todo-app-ffbf1.firebasestorage.app",
+  messagingSenderId: "309695703197",
+  appId: "1:309695703197:web:64670d49af4e1c6677cc74"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const tasksRef = collection(db, "tasks");
+
 // ---------- DARK MODE ----------
 const themeToggle = document.getElementById("themeToggle");
 
@@ -28,29 +49,12 @@ const clearBtn = document.getElementById("clearBtn");
 const filterButtons = document.querySelectorAll(".filters button");
 
 // ---------- DATA ----------
-// Each task is an object: { id, text, done }
+// Each task is { id, text, done, createdAt }. The list is filled from Firebase.
 let tasks = [];
 let currentFilter = "all";
 
-function loadTasks() {
-  const saved = localStorage.getItem("todo-tasks");
-  if (saved) {
-    tasks = JSON.parse(saved);
-  }
-}
-
-function saveTasks() {
-  localStorage.setItem("todo-tasks", JSON.stringify(tasks));
-}
-
-// Every change goes through here: save, then redraw
-function update() {
-  saveTasks();
-  render();
-}
-
-// ---------- ACTIONS ----------
-function addTask() {
+// ---------- ACTIONS (these write to Firebase) ----------
+async function addTask() {
   const text = taskInput.value.trim();
 
   if (text === "") {
@@ -58,36 +62,35 @@ function addTask() {
     return;
   }
 
-  tasks.push({ id: Date.now(), text: text, done: false });
   taskInput.value = "";
   taskInput.focus();
-  update();
+
+  await addDoc(tasksRef, {
+    text: text,
+    done: false,
+    createdAt: Date.now()
+  });
 }
 
-function toggleTask(id) {
-  const task = tasks.find(t => t.id === id);
-  task.done = !task.done;
-  update();
+async function toggleTask(task) {
+  await updateDoc(doc(db, "tasks", task.id), { done: !task.done });
 }
 
-function deleteTask(id) {
-  tasks = tasks.filter(t => t.id !== id);
-  update();
+async function deleteTask(id) {
+  await deleteDoc(doc(db, "tasks", id));
 }
 
-function editTask(id) {
-  const task = tasks.find(t => t.id === id);
+async function editTask(task) {
   const newText = prompt("Edit task:", task.text);
 
   if (newText !== null && newText.trim() !== "") {
-    task.text = newText.trim();
-    update();
+    await updateDoc(doc(db, "tasks", task.id), { text: newText.trim() });
   }
 }
 
-function clearCompleted() {
-  tasks = tasks.filter(t => !t.done);
-  update();
+async function clearCompleted() {
+  const completed = tasks.filter(t => t.done);
+  await Promise.all(completed.map(t => deleteDoc(doc(db, "tasks", t.id))));
 }
 
 // ---------- RENDER ----------
@@ -95,7 +98,6 @@ function clearCompleted() {
 function render() {
   taskList.innerHTML = "";
 
-  // Choose which tasks to show based on the filter
   let visible = tasks;
   if (currentFilter === "active") visible = tasks.filter(t => !t.done);
   if (currentFilter === "completed") visible = tasks.filter(t => t.done);
@@ -104,7 +106,7 @@ function render() {
     const empty = document.createElement("div");
     empty.className = "empty";
     empty.textContent = tasks.length === 0
-      ? "No tasks yet. Add your first one! ✨"
+      ? "No tasks yet. Add the first one! ✨"
       : "Nothing here.";
     taskList.appendChild(empty);
   }
@@ -116,7 +118,7 @@ function render() {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.checked = task.done;
-    checkbox.addEventListener("change", () => toggleTask(task.id));
+    checkbox.addEventListener("change", () => toggleTask(task));
 
     const span = document.createElement("span");
     span.className = "text";
@@ -125,7 +127,7 @@ function render() {
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️";
     editBtn.setAttribute("aria-label", "Edit task");
-    editBtn.addEventListener("click", () => editTask(task.id));
+    editBtn.addEventListener("click", () => editTask(task));
 
     const delBtn = document.createElement("button");
     delBtn.textContent = "🗑️";
@@ -136,12 +138,19 @@ function render() {
     taskList.appendChild(li);
   });
 
-  // Counter and footer
   const left = tasks.filter(t => !t.done).length;
   counter.textContent = left === 1 ? "1 task left" : left + " tasks left";
   footerInfo.textContent = tasks.length + " total";
   clearBtn.style.visibility = tasks.some(t => t.done) ? "visible" : "hidden";
 }
+
+// ---------- REAL-TIME LISTENER ----------
+// Runs once at start, then again every time anyone changes the list
+const q = query(tasksRef, orderBy("createdAt"));
+onSnapshot(q, snapshot => {
+  tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  render();
+});
 
 // ---------- EVENTS ----------
 addBtn.addEventListener("click", addTask);
@@ -160,7 +169,3 @@ filterButtons.forEach(btn => {
     render();
   });
 });
-
-// ---------- START ----------
-loadTasks();
-render();
