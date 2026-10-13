@@ -6,15 +6,52 @@ function setTheme(theme) {
   themeToggle.checked = theme === "dark";
 }
 
-// When the switch is clicked
 themeToggle.addEventListener("change", () => {
   setTheme(themeToggle.checked ? "dark" : "light");
 });
 
-// On page load: use the saved theme, or the phone/computer's setting
 const savedTheme = localStorage.getItem("todo-theme");
 if (savedTheme) {
   setTheme(savedTheme);
 } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
   setTheme("dark");
 }
+
+// ---------- TASKS ----------
+let tasks = [];
+
+const taskInput = document.getElementById("taskInput");
+const addBtn = document.getElementById("addBtn");
+const taskList = document.getElementById("taskList");
+
+function addTask() {
+  const text = taskInput.value.trim();
+
+  // validation: don't allow empty tasks
+  if (text === "") {
+    taskInput.focus();
+    return;
+  }
+
+  tasks.push({ id: Date.now(), text: text });
+  taskInput.value = "";
+  taskInput.focus();
+  render();
+}
+
+// Redraws the whole list from the tasks array
+function render() {
+  taskList.innerHTML = "";
+
+  tasks.forEach(task => {
+    const li = document.createElement("li");
+    li.textContent = task.text;
+    taskList.appendChild(li);
+  });
+}
+
+addBtn.addEventListener("click", addTask);
+
+taskInput.addEventListener("keydown", event => {
+  if (event.key === "Enter") addTask();
+});
