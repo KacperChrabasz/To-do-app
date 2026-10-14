@@ -56,6 +56,12 @@ body::before {
   opacity: 1;
 }
 
+/* ---------- TEXT SIZE ---------- */
+html { font-size: 16px; }
+html[data-size="small"] { font-size: 14px; }
+html[data-size="large"] { font-size: 19px; }
+body { font-size: 1rem; }
+
 /* ---------- PAGE LAYOUT (sidebar + main) ---------- */
 .layout {
   display: flex;
@@ -130,6 +136,11 @@ h1 {
   margin-top: 2px;
 }
 
+.title-box {
+  flex: 1;
+  min-width: 0;
+}
+
 .switch {
   position: relative;
   display: inline-block;
@@ -176,6 +187,25 @@ h1 {
 .switch input:checked + .slider::before {
   content: "🌙";
   transform: translateX(26px);
+}
+
+/* ---------- MENU BUTTON (☰) ---------- */
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  margin-right: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 1.3rem;
+  box-shadow: var(--shadow);
+}
+
+.icon-btn:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
 }
 
 /* ---------- SHARE ROW (invite link + new list) ---------- */
@@ -430,6 +460,177 @@ footer button:hover {
   font-size: 0.9rem;
 }
 
+/* ---------- SETTINGS OVERLAY ---------- */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 18, 32, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 40;
+}
+
+.settings-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ---------- SETTINGS PANEL ---------- */
+.settings-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(340px, 88vw);
+  padding: 0;
+  background: var(--card);
+  color: var(--text);
+  border-left: 1px solid var(--border);
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.25);
+  transform: translateX(100%);
+  transition: transform 0.35s ease;
+  z-index: 50;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-panel.open {
+  transform: translateX(0);
+}
+
+/* gradient header */
+.settings-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+  padding: 22px 20px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+}
+
+.settings-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #fff;
+}
+
+.settings-head button {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.settings-head button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+/* each setting is a card */
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 16px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.setting-row:hover {
+  border-color: var(--accent);
+}
+
+/* dropdowns */
+.setting-row select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 120px;
+  padding: 8px 34px 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-start);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235b6cff' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.setting-row select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(91, 108, 255, 0.2);
+}
+
+:root[data-theme="dark"] .setting-row select {
+  background-color: #252a3a;
+}
+
+/* on/off switch for the checkbox */
+.setting-row input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 48px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #cfd3e6;
+  transition: background 0.3s ease;
+  cursor: pointer;
+  margin: 0;
+}
+
+.setting-row input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.setting-row input[type="checkbox"]:checked {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+.setting-row input[type="checkbox"]:checked::before {
+  transform: translateX(20px);
+}
+
+/* small footer note at the bottom of the panel */
+.settings-panel::after {
+  content: "☰  Settings are saved on this device";
+  margin-top: auto;
+  padding: 16px 20px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-align: center;
+  border-top: 1px solid var(--border);
+}
+
 /* ---------- PHONE LAYOUT (sidebar moves to the top) ---------- */
 @media (max-width: 700px) {
   .layout {
@@ -460,122 +661,4 @@ footer button:hover {
     flex-shrink: 0;
     margin-bottom: 0;
   }
-}
-/* ---------- TEXT SIZE ---------- */
-html { font-size: 16px; }
-html[data-size="small"] { font-size: 14px; }
-html[data-size="large"] { font-size: 19px; }
-body { font-size: 1rem; }
-
-/* ---------- HEADER: menu button + title ---------- */
-.title-box {
-  flex: 1;
-  min-width: 0;
-}
-
-.icon-btn {
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  margin-right: 12px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--text);
-  font-size: 1.3rem;
-  box-shadow: var(--shadow);
-}
-
-.icon-btn:hover {
-  border-color: var(--accent);
-  transform: translateY(-2px);
-}
-
-/* ---------- SETTINGS OVERLAY + PANEL ---------- */
-.settings-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  z-index: 40;
-}
-
-.settings-overlay.open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.settings-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  height: 100%;
-  width: min(320px, 88vw);
-  padding: 22px 18px;
-  background: var(--card);
-  color: var(--text);
-  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.2);
-  transform: translateX(100%);
-  transition: transform 0.35s ease;
-  z-index: 50;
-  overflow-y: auto;
-}
-
-.settings-panel.open {
-  transform: translateX(0);
-}
-
-.settings-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-}
-
-.settings-head h2 {
-  margin: 0;
-  font-size: 1.2rem;
-}
-
-.settings-head button {
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-size: 1.1rem;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-}
-
-.settings-head button:hover {
-  background: var(--border);
-}
-
-.setting-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-  font-weight: 600;
-}
-
-.setting-row select {
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--accent);
-  background: var(--card);
-  color: var(--text);
-  font-size: 0.95rem;
-  cursor: pointer;
-}
-
-.setting-row input[type="checkbox"] {
-  width: 22px;
-  height: 22px;
-  accent-color: var(--accent);
-  cursor: pointer;
 }
