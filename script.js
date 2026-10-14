@@ -20,8 +20,14 @@ const db = getFirestore(app);
 // ---------- SETTINGS (saved in this browser) ----------
 const SETTINGS_KEY = "todo-settings";
 
+// Picks a starting language from the browser, if we have a translation for it
+function guessLanguage() {
+  const code = navigator.language.slice(0, 2);
+  return ["en", "pl", "es", "de", "fr", "pt"].includes(code) ? code : "en";
+}
+
 const defaultSettings = {
-  lang: navigator.language.startsWith("pl") ? "pl" : "en",
+  lang: guessLanguage(),
   size: "normal",
   confirmDelete: false
 };
@@ -41,7 +47,8 @@ function saveSettings() {
 let settings = loadSettings();
 
 // ---------- TRANSLATIONS ----------
-// To add a language, copy the "en" block, change the name, and translate the text.
+// To add a language: copy the "en" block, change the name, and translate the text.
+// Then add an <option> for it in index.html and add its code to guessLanguage().
 const translations = {
   en: {
     appTitle: "My Tasks",
@@ -70,6 +77,8 @@ const translations = {
     nothingHere: "Nothing here.",
     tasksLeft: n => n === 1 ? "1 task left" : `${n} tasks left`,
     total: n => `${n} total`,
+    progress: n => `${n}% done`,
+    allDone: "🎉 All done! Great job!",
     editPrompt: "Edit task:",
     confirmDeleteMsg: "Delete this task?",
     openNow: "(open now)",
@@ -109,6 +118,8 @@ const translations = {
     nothingHere: "Tu nic nie ma.",
     tasksLeft: n => `Zostało: ${n}`,
     total: n => `Razem: ${n}`,
+    progress: n => `${n}% ukończone`,
+    allDone: "🎉 Wszystko zrobione! Brawo!",
     editPrompt: "Edytuj zadanie:",
     confirmDeleteMsg: "Usunąć to zadanie?",
     openNow: "(otwarta)",
@@ -120,6 +131,170 @@ const translations = {
     openSettings: "Otwórz ustawienia",
     closeSettings: "Zamknij ustawienia",
     darkMode: "Przełącz tryb ciemny"
+  },
+  es: {
+    appTitle: "Mis tareas",
+    myLists: "📋 Mis listas",
+    settings: "⚙️ Ajustes",
+    language: "Idioma",
+    textSize: "Tamaño de texto",
+    small: "Pequeño",
+    normal: "Normal",
+    large: "Grande",
+    confirmDelete: "Preguntar antes de borrar",
+    copyLink: "🔗 Copiar enlace de invitación",
+    linkCopied: "✅ ¡Enlace copiado!",
+    copyPrompt: "Copia este enlace y envíalo a tu grupo:",
+    newList: "➕ Nueva lista",
+    newListPrompt: "Pon nombre a tu nueva lista:",
+    defaultListName: "Mi lista",
+    sharedList: "Lista compartida",
+    addPlaceholder: "Añade una nueva tarea...",
+    addTask: "Añadir tarea",
+    all: "Todas",
+    active: "Activas",
+    done: "Hechas",
+    clearCompleted: "Borrar hechas",
+    noTasks: "Aún no hay tareas. ¡Añade la primera! ✨",
+    nothingHere: "No hay nada aquí.",
+    tasksLeft: n => n === 1 ? "Queda 1 tarea" : `Quedan ${n} tareas`,
+    total: n => `${n} en total`,
+    progress: n => `${n}% completado`,
+    allDone: "🎉 ¡Todo hecho! Eres increíble.",
+    editPrompt: "Editar tarea:",
+    confirmDeleteMsg: "¿Borrar esta tarea?",
+    openNow: "(abierta)",
+    removeList: "Quitar de mis listas",
+    removeListTitle: "Quitar de mis listas (las tareas siguen online)",
+    noLists: "No hay listas aún.",
+    editTask: "Editar tarea",
+    deleteTask: "Borrar tarea",
+    openSettings: "Abrir ajustes",
+    closeSettings: "Cerrar ajustes",
+    darkMode: "Cambiar modo oscuro"
+  },
+  de: {
+    appTitle: "Meine Aufgaben",
+    myLists: "📋 Meine Listen",
+    settings: "⚙️ Einstellungen",
+    language: "Sprache",
+    textSize: "Textgröße",
+    small: "Klein",
+    normal: "Normal",
+    large: "Groß",
+    confirmDelete: "Vor dem Löschen fragen",
+    copyLink: "🔗 Einladungslink kopieren",
+    linkCopied: "✅ Link kopiert!",
+    copyPrompt: "Kopiere diesen Link und schick ihn deiner Gruppe:",
+    newList: "➕ Neue Liste",
+    newListPrompt: "Name der neuen Liste:",
+    defaultListName: "Meine Liste",
+    sharedList: "Geteilte Liste",
+    addPlaceholder: "Neue Aufgabe hinzufügen...",
+    addTask: "Aufgabe hinzufügen",
+    all: "Alle",
+    active: "Offen",
+    done: "Erledigt",
+    clearCompleted: "Erledigte löschen",
+    noTasks: "Noch keine Aufgaben. Füge die erste hinzu! ✨",
+    nothingHere: "Hier ist nichts.",
+    tasksLeft: n => n === 1 ? "1 Aufgabe offen" : `${n} Aufgaben offen`,
+    total: n => `${n} insgesamt`,
+    progress: n => `${n} % erledigt`,
+    allDone: "🎉 Alles erledigt! Stark!",
+    editPrompt: "Aufgabe bearbeiten:",
+    confirmDeleteMsg: "Diese Aufgabe löschen?",
+    openNow: "(geöffnet)",
+    removeList: "Aus meinen Listen entfernen",
+    removeListTitle: "Aus meinen Listen entfernen (Aufgaben bleiben online)",
+    noLists: "Noch keine Listen.",
+    editTask: "Aufgabe bearbeiten",
+    deleteTask: "Aufgabe löschen",
+    openSettings: "Einstellungen öffnen",
+    closeSettings: "Einstellungen schließen",
+    darkMode: "Dunkelmodus umschalten"
+  },
+  fr: {
+    appTitle: "Mes tâches",
+    myLists: "📋 Mes listes",
+    settings: "⚙️ Paramètres",
+    language: "Langue",
+    textSize: "Taille du texte",
+    small: "Petite",
+    normal: "Normale",
+    large: "Grande",
+    confirmDelete: "Demander avant de supprimer",
+    copyLink: "🔗 Copier le lien d'invitation",
+    linkCopied: "✅ Lien copié !",
+    copyPrompt: "Copie ce lien et envoie-le à ton groupe :",
+    newList: "➕ Nouvelle liste",
+    newListPrompt: "Nomme ta nouvelle liste :",
+    defaultListName: "Ma liste",
+    sharedList: "Liste partagée",
+    addPlaceholder: "Ajouter une nouvelle tâche...",
+    addTask: "Ajouter une tâche",
+    all: "Toutes",
+    active: "En cours",
+    done: "Faites",
+    clearCompleted: "Supprimer les faites",
+    noTasks: "Pas encore de tâches. Ajoute la première ! ✨",
+    nothingHere: "Rien ici.",
+    tasksLeft: n => n === 1 ? "Il reste 1 tâche" : `Il reste ${n} tâches`,
+    total: n => `${n} au total`,
+    progress: n => `${n} % terminé`,
+    allDone: "🎉 Tout est fait ! Bravo !",
+    editPrompt: "Modifier la tâche :",
+    confirmDeleteMsg: "Supprimer cette tâche ?",
+    openNow: "(ouverte)",
+    removeList: "Retirer de mes listes",
+    removeListTitle: "Retirer de mes listes (les tâches restent en ligne)",
+    noLists: "Pas encore de listes.",
+    editTask: "Modifier la tâche",
+    deleteTask: "Supprimer la tâche",
+    openSettings: "Ouvrir les paramètres",
+    closeSettings: "Fermer les paramètres",
+    darkMode: "Activer le mode sombre"
+  },
+  pt: {
+    appTitle: "As minhas tarefas",
+    myLists: "📋 As minhas listas",
+    settings: "⚙️ Definições",
+    language: "Idioma",
+    textSize: "Tamanho do texto",
+    small: "Pequeno",
+    normal: "Normal",
+    large: "Grande",
+    confirmDelete: "Perguntar antes de apagar",
+    copyLink: "🔗 Copiar link de convite",
+    linkCopied: "✅ Link copiado!",
+    copyPrompt: "Copia este link e envia-o ao teu grupo:",
+    newList: "➕ Nova lista",
+    newListPrompt: "Dá um nome à nova lista:",
+    defaultListName: "A minha lista",
+    sharedList: "Lista partilhada",
+    addPlaceholder: "Adiciona uma nova tarefa...",
+    addTask: "Adicionar tarefa",
+    all: "Todas",
+    active: "Ativas",
+    done: "Feitas",
+    clearCompleted: "Apagar feitas",
+    noTasks: "Ainda não há tarefas. Adiciona a primeira! ✨",
+    nothingHere: "Não há nada aqui.",
+    tasksLeft: n => n === 1 ? "Falta 1 tarefa" : `Faltam ${n} tarefas`,
+    total: n => `${n} no total`,
+    progress: n => `${n}% concluído`,
+    allDone: "🎉 Tudo feito! És incrível.",
+    editPrompt: "Editar tarefa:",
+    confirmDeleteMsg: "Apagar esta tarefa?",
+    openNow: "(aberta)",
+    removeList: "Remover das minhas listas",
+    removeListTitle: "Remover das minhas listas (as tarefas continuam online)",
+    noLists: "Ainda não há listas.",
+    editTask: "Editar tarefa",
+    deleteTask: "Apagar tarefa",
+    openSettings: "Abrir definições",
+    closeSettings: "Fechar definições",
+    darkMode: "Alternar modo escuro"
   }
 };
 
@@ -216,6 +391,8 @@ const filterButtons = document.querySelectorAll(".filters button");
 const shareBtn = document.getElementById("shareBtn");
 const newListBtn = document.getElementById("newListBtn");
 const myListsUl = document.getElementById("myLists");
+const progressFill = document.getElementById("progressFill");
+const progressText = document.getElementById("progressText");
 
 const menuBtn = document.getElementById("menuBtn");
 const settingsPanel = document.getElementById("settingsPanel");
@@ -228,6 +405,7 @@ const confirmToggle = document.getElementById("confirmToggle");
 // ---------- DATA ----------
 let tasks = [];
 let currentFilter = "all";
+let wasAllDone = null; // used to celebrate only when the list becomes fully done
 
 // ---------- ACTIONS (these write to Firebase) ----------
 async function addTask() {
@@ -271,8 +449,26 @@ async function editTask(task) {
 }
 
 async function clearCompleted() {
-  const completed = tasks.filter(t => t.done);
-  await Promise.all(completed.map(t => deleteDoc(taskDoc(t.id))));
+  const completed = tasks.filter(task => task.done);
+  await Promise.all(completed.map(task => deleteDoc(taskDoc(task.id))));
+}
+
+// ---------- CELEBRATION (confetti) ----------
+function celebrate() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const colors = ["#5b6cff", "#b06cff", "#ff6b9d", "#ffc857", "#3ddc97"];
+
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement("span");
+    piece.className = "confetti";
+    piece.style.left = Math.random() * 100 + "vw";
+    piece.style.background = colors[i % colors.length];
+    piece.style.animationDuration = (2 + Math.random() * 2) + "s";
+    piece.style.animationDelay = Math.random() * 0.5 + "s";
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 4500);
+  }
 }
 
 // ---------- INVITE LINK ----------
@@ -354,8 +550,8 @@ function render() {
   taskList.innerHTML = "";
 
   let visible = tasks;
-  if (currentFilter === "active") visible = tasks.filter(t => !t.done);
-  if (currentFilter === "completed") visible = tasks.filter(t => t.done);
+  if (currentFilter === "active") visible = tasks.filter(task => !task.done);
+  if (currentFilter === "completed") visible = tasks.filter(task => task.done);
 
   if (visible.length === 0) {
     const empty = document.createElement("div");
@@ -391,10 +587,17 @@ function render() {
     taskList.appendChild(li);
   });
 
-  const left = tasks.filter(t => !t.done).length;
+  // Counter, footer, and progress bar
+  const left = tasks.filter(task => !task.done).length;
+  const doneCount = tasks.length - left;
+  const pct = tasks.length ? Math.round((doneCount / tasks.length) * 100) : 0;
+
   counter.textContent = t("tasksLeft", left);
   footerInfo.textContent = t("total", tasks.length);
-  clearBtn.style.visibility = tasks.some(t => t.done) ? "visible" : "hidden";
+  clearBtn.style.visibility = doneCount > 0 ? "visible" : "hidden";
+
+  progressFill.style.width = pct + "%";
+  progressText.textContent = tasks.length > 0 && pct === 100 ? t("allDone") : t("progress", pct);
 }
 
 // ---------- SETTINGS PANEL ----------
@@ -441,6 +644,11 @@ function closeSettings() {
 const q = query(tasksRef, orderBy("createdAt"));
 onSnapshot(q, snapshot => {
   tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  const allDone = tasks.length > 0 && tasks.every(task => task.done);
+  if (allDone && wasAllDone === false) celebrate();
+  wasAllDone = allDone;
+
   render();
 });
 
