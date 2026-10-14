@@ -822,3 +822,49 @@ footer button:hover {
     animation: none !important;
   }
 }
+/* ---------- COMPACT MODE ---------- */
+:root[data-density="compact"] #taskList li {
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  gap: 8px;
+  border-radius: 12px;
+}
+
+:root[data-density="compact"] #taskList li button {
+  width: 30px;
+  height: 30px;
+}
+
+:root[data-density="compact"] .add-row input {
+  padding: 11px 14px;
+}
+
+/* ---------- FLOATING GLOW BACKGROUND ---------- */
+body::after {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 30%, var(--accent), transparent 35%),
+    radial-gradient(circle at 80% 70%, var(--accent-2), transparent 35%);
+  opacity: 0.12;
+  filter: blur(40px);
+  animation: glow-drift 18s ease-in-out infinite alternate;
+}
+
+:root[data-theme="dark"] body::after {
+  opacity: 0.18;
+}
+
+@keyframes glow-drift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(40px, -30px) scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after {
+    animation: none;
+  }
+}

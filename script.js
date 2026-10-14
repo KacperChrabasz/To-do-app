@@ -20,6 +20,15 @@ const db = getFirestore(app);
 // ---------- SETTINGS (saved in this browser) ----------
 const SETTINGS_KEY = "todo-settings";
 
+// Accent colors: [main color, second color for gradients]
+const PALETTES = {
+  blue: ["#5b6cff", "#b06cff"],
+  pink: ["#ff5c8a", "#ff9a5c"],
+  green: ["#20b47a", "#4fd1a5"],
+  orange: ["#ff8a3d", "#ffc247"],
+  purple: ["#8b5cf6", "#d946ef"]
+};
+
 // Picks a starting language from the browser, if we have a translation for it
 function guessLanguage() {
   const code = navigator.language.slice(0, 2);
@@ -29,7 +38,10 @@ function guessLanguage() {
 const defaultSettings = {
   lang: guessLanguage(),
   size: "normal",
-  confirmDelete: false
+  confirmDelete: false,
+  accent: "blue",
+  compact: false,
+  completedLast: false
 };
 
 function loadSettings() {
@@ -59,6 +71,14 @@ const translations = {
     small: "Small",
     normal: "Normal",
     large: "Large",
+    accent: "Accent color",
+    colorBlue: "Blue",
+    colorPink: "Pink",
+    colorGreen: "Green",
+    colorOrange: "Orange",
+    colorPurple: "Purple",
+    compact: "Compact list",
+    completedLast: "Completed at the bottom",
     confirmDelete: "Ask before deleting",
     copyLink: "🔗 Copy invite link",
     linkCopied: "✅ Link copied!",
@@ -102,6 +122,14 @@ const translations = {
     small: "Mały",
     normal: "Normalny",
     large: "Duży",
+    accent: "Kolor akcentu",
+    colorBlue: "Niebieski",
+    colorPink: "Różowy",
+    colorGreen: "Zielony",
+    colorOrange: "Pomarańczowy",
+    colorPurple: "Fioletowy",
+    compact: "Kompaktowa lista",
+    completedLast: "Ukończone na dole",
     confirmDelete: "Pytaj przed usunięciem",
     copyLink: "🔗 Kopiuj link zaproszenia",
     linkCopied: "✅ Link skopiowany!",
@@ -145,6 +173,14 @@ const translations = {
     small: "Pequeño",
     normal: "Normal",
     large: "Grande",
+    accent: "Color de acento",
+    colorBlue: "Azul",
+    colorPink: "Rosa",
+    colorGreen: "Verde",
+    colorOrange: "Naranja",
+    colorPurple: "Morado",
+    compact: "Lista compacta",
+    completedLast: "Completadas abajo",
     confirmDelete: "Preguntar antes de borrar",
     copyLink: "🔗 Copiar enlace de invitación",
     linkCopied: "✅ ¡Enlace copiado!",
@@ -188,6 +224,14 @@ const translations = {
     small: "Klein",
     normal: "Normal",
     large: "Groß",
+    accent: "Akzentfarbe",
+    colorBlue: "Blau",
+    colorPink: "Rosa",
+    colorGreen: "Grün",
+    colorOrange: "Orange",
+    colorPurple: "Lila",
+    compact: "Kompakte Liste",
+    completedLast: "Erledigte unten",
     confirmDelete: "Vor dem Löschen fragen",
     copyLink: "🔗 Einladungslink kopieren",
     linkCopied: "✅ Link kopiert!",
@@ -231,6 +275,14 @@ const translations = {
     small: "Petite",
     normal: "Normale",
     large: "Grande",
+    accent: "Couleur d'accent",
+    colorBlue: "Bleu",
+    colorPink: "Rose",
+    colorGreen: "Vert",
+    colorOrange: "Orange",
+    colorPurple: "Violet",
+    compact: "Liste compacte",
+    completedLast: "Faites en bas",
     confirmDelete: "Demander avant de supprimer",
     copyLink: "🔗 Copier le lien d'invitation",
     linkCopied: "✅ Lien copié !",
@@ -274,6 +326,14 @@ const translations = {
     small: "Pequeno",
     normal: "Normal",
     large: "Grande",
+    accent: "Cor de destaque",
+    colorBlue: "Azul",
+    colorPink: "Rosa",
+    colorGreen: "Verde",
+    colorOrange: "Laranja",
+    colorPurple: "Roxo",
+    compact: "Lista compacta",
+    completedLast: "Feitas em baixo",
     confirmDelete: "Perguntar antes de apagar",
     copyLink: "🔗 Copiar link de convite",
     linkCopied: "✅ Link copiado!",
@@ -412,6 +472,9 @@ const settingsOverlay = document.getElementById("settingsOverlay");
 const closeSettingsBtn = document.getElementById("closeSettingsBtn");
 const languageSelect = document.getElementById("languageSelect");
 const textSizeSelect = document.getElementById("textSizeSelect");
+const accentSelect = document.getElementById("accentSelect");
+const compactToggle = document.getElementById("compactToggle");
+const completedLastToggle = document.getElementById("completedLastToggle");
 const confirmToggle = document.getElementById("confirmToggle");
 
 // ---------- DATA ----------
@@ -611,9 +674,18 @@ function renderMyLists() {
 function render() {
   taskList.innerHTML = "";
 
+  // 1. Filter by All / Active / Done
   let visible = tasks;
   if (currentFilter === "active") visible = tasks.filter(task => !task.done);
   if (currentFilter === "completed") visible = tasks.filter(task => task.done);
+
+  // 2. Optionally move completed tasks to the bottom
+  if (settings.completedLast) {
+    visible = [
+      ...visible.filter(task => !task.done),
+      ...visible.filter(task => task.done)
+    ];
+  }
 
   if (visible.length === 0) {
     const empty = document.createElement("div");
@@ -667,6 +739,12 @@ function render() {
 function applySettings() {
   document.documentElement.lang = settings.lang;
   document.documentElement.dataset.size = settings.size;
+  document.documentElement.dataset.density = settings.compact ? "compact" : "normal";
+
+  // Accent color: sets the two colors used across the app
+  const [mainColor, secondColor] = PALETTES[settings.accent] || PALETTES.blue;
+  document.documentElement.style.setProperty("--accent", mainColor);
+  document.documentElement.style.setProperty("--accent-2", secondColor);
 
   document.querySelectorAll("[data-i18n]").forEach(el => {
     el.textContent = t(el.dataset.i18n);
@@ -682,6 +760,9 @@ function applySettings() {
 
   languageSelect.value = settings.lang;
   textSizeSelect.value = settings.size;
+  accentSelect.value = settings.accent;
+  compactToggle.checked = settings.compact;
+  completedLastToggle.checked = settings.completedLast;
   confirmToggle.checked = settings.confirmDelete;
 }
 
@@ -759,6 +840,24 @@ textSizeSelect.addEventListener("change", () => {
   settings.size = textSizeSelect.value;
   saveSettings();
   applySettings();
+});
+
+accentSelect.addEventListener("change", () => {
+  settings.accent = accentSelect.value;
+  saveSettings();
+  applySettings();
+});
+
+compactToggle.addEventListener("change", () => {
+  settings.compact = compactToggle.checked;
+  saveSettings();
+  applySettings();
+});
+
+completedLastToggle.addEventListener("change", () => {
+  settings.completedLast = completedLastToggle.checked;
+  saveSettings();
+  render();
 });
 
 confirmToggle.addEventListener("change", () => {
