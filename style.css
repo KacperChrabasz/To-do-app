@@ -713,3 +713,112 @@ footer button:hover {
     opacity: 0;
   }
 }
+/* ---------- MILESTONE BANNERS (50% and 100%) ---------- */
+.milestone {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+  animation: milestone-in 0.5s ease forwards;
+}
+
+.milestone.hide {
+  animation: milestone-out 0.5s ease forwards;
+}
+
+.milestone-icon {
+  font-size: 1.4rem;
+  display: inline-block;
+  animation: icon-bounce 0.8s ease 0.5s 2;
+}
+
+.toast-half {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  font-size: 1rem;
+}
+
+.toast-all {
+  background: linear-gradient(135deg, #ffb347, #ff6b9d, var(--accent-2));
+  font-size: 1.15rem;
+  padding: 16px 26px;
+  animation: milestone-in 0.5s ease forwards, milestone-pop 0.6s ease 0.5s;
+}
+
+.toast-all .milestone-icon {
+  font-size: 1.8rem;
+}
+
+@keyframes milestone-in {
+  from { transform: translate(-50%, -150%); opacity: 0; }
+  to   { transform: translate(-50%, 0);     opacity: 1; }
+}
+
+@keyframes milestone-out {
+  from { transform: translate(-50%, 0);     opacity: 1; }
+  to   { transform: translate(-50%, -150%); opacity: 0; }
+}
+
+@keyframes milestone-pop {
+  0%   { transform: translate(-50%, 0) scale(1); }
+  40%  { transform: translate(-50%, 0) scale(1.12); }
+  70%  { transform: translate(-50%, 0) scale(0.97); }
+  100% { transform: translate(-50%, 0) scale(1); }
+}
+
+@keyframes icon-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px) rotate(-8deg); }
+}
+
+/* ---------- PROGRESS BAR EFFECTS ---------- */
+.progress-fill.pulse {
+  animation: progress-glow 0.9s ease 2;
+}
+
+.progress-fill.shine {
+  position: relative;
+  overflow: hidden;
+  animation: progress-glow 0.9s ease 2;
+}
+
+.progress-fill.shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  animation: progress-shine 1.2s ease 0.3s 2;
+}
+
+@keyframes progress-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(91, 108, 255, 0); }
+  50%      { box-shadow: 0 0 18px 4px rgba(91, 108, 255, 0.7); }
+}
+
+@keyframes progress-shine {
+  from { left: -60%; }
+  to   { left: 110%; }
+}
+
+/* ---------- REDUCED MOTION (no animations for people who turned them off) ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .milestone,
+  .milestone-icon,
+  .progress-fill.pulse,
+  .progress-fill.shine,
+  .progress-fill.shine::after {
+    animation: none !important;
+  }
+}

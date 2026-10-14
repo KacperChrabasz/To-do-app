@@ -79,6 +79,8 @@ const translations = {
     total: n => `${n} total`,
     progress: n => `${n}% done`,
     allDone: "🎉 All done! Great job!",
+    halfway: "🚀 Halfway there! Keep going!",
+    allDoneBig: "🏆 Everything is done!",
     editPrompt: "Edit task:",
     confirmDeleteMsg: "Delete this task?",
     openNow: "(open now)",
@@ -120,6 +122,8 @@ const translations = {
     total: n => `Razem: ${n}`,
     progress: n => `${n}% ukończone`,
     allDone: "🎉 Wszystko zrobione! Brawo!",
+    halfway: "🚀 Połowa za nami! Tak trzymaj!",
+    allDoneBig: "🏆 Wszystko zrobione!",
     editPrompt: "Edytuj zadanie:",
     confirmDeleteMsg: "Usunąć to zadanie?",
     openNow: "(otwarta)",
@@ -161,6 +165,8 @@ const translations = {
     total: n => `${n} en total`,
     progress: n => `${n}% completado`,
     allDone: "🎉 ¡Todo hecho! Eres increíble.",
+    halfway: "🚀 ¡Vas por la mitad! ¡Sigue así!",
+    allDoneBig: "🏆 ¡Todo terminado!",
     editPrompt: "Editar tarea:",
     confirmDeleteMsg: "¿Borrar esta tarea?",
     openNow: "(abierta)",
@@ -202,6 +208,8 @@ const translations = {
     total: n => `${n} insgesamt`,
     progress: n => `${n} % erledigt`,
     allDone: "🎉 Alles erledigt! Stark!",
+    halfway: "🚀 Halbzeit! Weiter so!",
+    allDoneBig: "🏆 Alles erledigt!",
     editPrompt: "Aufgabe bearbeiten:",
     confirmDeleteMsg: "Diese Aufgabe löschen?",
     openNow: "(geöffnet)",
@@ -243,6 +251,8 @@ const translations = {
     total: n => `${n} au total`,
     progress: n => `${n} % terminé`,
     allDone: "🎉 Tout est fait ! Bravo !",
+    halfway: "🚀 À mi-parcours ! Continue !",
+    allDoneBig: "🏆 Tout est terminé !",
     editPrompt: "Modifier la tâche :",
     confirmDeleteMsg: "Supprimer cette tâche ?",
     openNow: "(ouverte)",
@@ -284,6 +294,8 @@ const translations = {
     total: n => `${n} no total`,
     progress: n => `${n}% concluído`,
     allDone: "🎉 Tudo feito! És incrível.",
+    halfway: "🚀 Meio caminho andado! Continua!",
+    allDoneBig: "🏆 Tudo concluído!",
     editPrompt: "Editar tarefa:",
     confirmDeleteMsg: "Apagar esta tarefa?",
     openNow: "(aberta)",
@@ -405,7 +417,7 @@ const confirmToggle = document.getElementById("confirmToggle");
 // ---------- DATA ----------
 let tasks = [];
 let currentFilter = "all";
-let wasAllDone = null; // used to celebrate only when the list becomes fully done
+let lastPercent = null; // remembers the last progress, so milestones fire only when crossed
 
 // ---------- ACTIONS (these write to Firebase) ----------
 async function addTask() {
@@ -453,13 +465,16 @@ async function clearCompleted() {
   await Promise.all(completed.map(task => deleteDoc(taskDoc(task.id))));
 }
 
-// ---------- CELEBRATION (confetti) ----------
-function celebrate() {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+// ---------- ANIMATIONS ----------
+const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Drops a burst of colored confetti from the top of the screen
+function burstConfetti(count) {
+  if (reduceMotion()) return;
 
   const colors = ["#5b6cff", "#b06cff", "#ff6b9d", "#ffc857", "#3ddc97"];
 
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < count; i++) {
     const piece = document.createElement("span");
     piece.className = "confetti";
     piece.style.left = Math.random() * 100 + "vw";
@@ -469,6 +484,53 @@ function celebrate() {
     document.body.appendChild(piece);
     setTimeout(() => piece.remove(), 4500);
   }
+}
+
+// Shows a banner at the top of the screen for a few seconds
+function showMilestone(icon, text, extraClass) {
+  const banner = document.createElement("div");
+  banner.className = "milestone " + extraClass;
+
+  const iconEl = document.createElement("span");
+  iconEl.className = "milestone-icon";
+  iconEl.textContent = icon;
+
+  const textEl = document.createElement("span");
+  textEl.textContent = text;
+
+  banner.append(iconEl, textEl);
+  document.body.appendChild(banner);
+
+  setTimeout(() => banner.classList.add("hide"), 2800);
+  setTimeout(() => banner.remove(), 3300);
+}
+
+// Makes the progress bar glow once
+function pulseProgress(extraClass) {
+  progressFill.classList.remove("pulse", "shine");
+  void progressFill.offsetWidth; // restarts the animation
+  progressFill.classList.add(extraClass);
+}
+
+// 50%: rocket banner, glowing bar, small confetti burst
+function celebrateHalfway() {
+  showMilestone("🚀", t("halfway"), "toast-half");
+  pulseProgress("pulse");
+  burstConfetti(25);
+}
+
+// 100%: big trophy banner, shining bar, large confetti burst
+function celebrateAllDone() {
+  showMilestone("🏆", t("allDoneBig"), "toast-all");
+  pulseProgress("shine");
+  burstConfetti(90);
+}
+
+// Works out the percent of tasks that are done
+function getPercent() {
+  if (tasks.length === 0) return 0;
+  const doneCount = tasks.filter(task => task.done).length;
+  return Math.round((doneCount / tasks.length) * 100);
 }
 
 // ---------- INVITE LINK ----------
@@ -590,7 +652,7 @@ function render() {
   // Counter, footer, and progress bar
   const left = tasks.filter(task => !task.done).length;
   const doneCount = tasks.length - left;
-  const pct = tasks.length ? Math.round((doneCount / tasks.length) * 100) : 0;
+  const pct = getPercent();
 
   counter.textContent = t("tasksLeft", left);
   footerInfo.textContent = t("total", tasks.length);
@@ -645,9 +707,17 @@ const q = query(tasksRef, orderBy("createdAt"));
 onSnapshot(q, snapshot => {
   tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-  const allDone = tasks.length > 0 && tasks.every(task => task.done);
-  if (allDone && wasAllDone === false) celebrate();
-  wasAllDone = allDone;
+  const pct = getPercent();
+
+  // Celebrate only when crossing a milestone (not when the page first loads)
+  if (lastPercent !== null) {
+    if (lastPercent < 100 && pct === 100) {
+      celebrateAllDone();
+    } else if (lastPercent < 50 && pct >= 50 && pct < 100) {
+      celebrateHalfway();
+    }
+  }
+  lastPercent = pct;
 
   render();
 });
