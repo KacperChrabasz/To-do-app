@@ -293,3 +293,35 @@ footer button {
   font-weight: 600;
   padding: 8px;
 }
+/* ---------- MY LISTS ---------- */
+.my-lists {
+  margin-top: 30px;
+}
+
+.my-lists h2 {
+  font-size: 1.1rem;
+  margin: 0 0 10px;
+}
+
+.my-lists li {
+  justify-content: space-between;
+}
+
+.my-lists li.current {
+  border-color: var(--accent);
+}
+
+.my-lists .list-link {
+  flex: 1;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.current-tag {
+  color: var(--accent);
+  font-size: 0.8rem;
+  margin-left: 6px;
+  white-space: nowrap;
+}

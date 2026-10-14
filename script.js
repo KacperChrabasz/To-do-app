@@ -17,6 +17,38 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// ---------- MY LISTS (saved in this browser only) ----------
+const MY_LISTS_KEY = "todo-my-lists";
+
+function getMyLists() {
+  try {
+    return JSON.parse(localStorage.getItem(MY_LISTS_KEY)) || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveMyLists(lists) {
+  localStorage.setItem(MY_LISTS_KEY, JSON.stringify(lists));
+}
+
+// Remembers a list, or updates its name and last opened time
+function rememberList(id, name) {
+  const lists = getMyLists();
+  const existing = lists.find(l => l.id === id);
+  const finalName = name || (existing ? existing.name : "Shared list");
+
+  const others = lists.filter(l => l.id !== id);
+  others.unshift({ id: id, name: finalName, lastOpened: Date.now() });
+  saveMyLists(others.slice(0, 20));
+}
+
+// Removes a list from this browser only. Its tasks stay online.
+function forgetList(id) {
+  saveMyLists(getMyLists().filter(l => l.id !== id));
+  renderMyLists();
+}
+
 // ---------- GROUP (LIST) ID ----------
 // The list id lives in the link, e.g. index.html?list=k3j9x2
 function getListId() {
@@ -26,11 +58,14 @@ function getListId() {
   if (!id) {
     id = Math.random().toString(36).substring(2, 10);
     window.history.replaceState({}, "", "?list=" + id);
+    rememberList(id, "My list");
   }
   return id;
 }
 
 const listId = getListId();
+rememberList(listId);
+
 const tasksRef = collection(db, "lists", listId, "tasks");
 
 function taskDoc(id) {
@@ -67,6 +102,7 @@ const clearBtn = document.getElementById("clearBtn");
 const filterButtons = document.querySelectorAll(".filters button");
 const shareBtn = document.getElementById("shareBtn");
 const newListBtn = document.getElementById("newListBtn");
+const myListsUl = document.getElementById("myLists");
 
 // ---------- DATA ----------
 let tasks = [];
@@ -113,7 +149,6 @@ async function clearCompleted() {
 }
 
 // ---------- INVITE LINK ----------
-// Builds the link from this list's id, e.g. https://your-site/?list=k3j9x2
 function getInviteLink() {
   return window.location.origin + window.location.pathname + "?list=" + listId;
 }
@@ -125,7 +160,6 @@ shareBtn.addEventListener("click", async () => {
     await navigator.clipboard.writeText(link);
     shareBtn.textContent = "✅ Link copied!";
   } catch (e) {
-    // If the browser blocks copying, show the link so it can be copied by hand
     prompt("Copy this link and send it to your group:", link);
   }
 
@@ -136,12 +170,57 @@ shareBtn.addEventListener("click", async () => {
 
 // ---------- NEW LIST BUTTON ----------
 newListBtn.addEventListener("click", () => {
-  // make a random list id, like "k3j9x2"
-  const newId = Math.random().toString(36).substring(2, 10);
+  const name = prompt("Name your new list:", "My list");
+  if (name === null) return; // user pressed Cancel
 
-  // open the same page with the new id in the link
+  const newId = Math.random().toString(36).substring(2, 10);
+  rememberList(newId, name.trim() || "My list");
+
   window.location.href = window.location.pathname + "?list=" + newId;
 });
+
+// ---------- MY LISTS DISPLAY ----------
+function renderMyLists() {
+  myListsUl.innerHTML = "";
+
+  const lists = getMyLists();
+
+  if (lists.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "empty";
+    empty.textContent = "No lists yet.";
+    myListsUl.appendChild(empty);
+    return;
+  }
+
+  lists.forEach(list => {
+    const li = document.createElement("li");
+    if (list.id === listId) li.classList.add("current");
+
+    const link = document.createElement("a");
+    link.className = "list-link";
+    link.href = window.location.pathname + "?list=" + list.id;
+    link.textContent = list.name;
+
+    li.appendChild(link);
+
+    if (list.id === listId) {
+      const tag = document.createElement("span");
+      tag.className = "current-tag";
+      tag.textContent = "(open now)";
+      li.appendChild(tag);
+    }
+
+    const forgetBtn = document.createElement("button");
+    forgetBtn.textContent = "✖";
+    forgetBtn.setAttribute("aria-label", "Remove from my lists");
+    forgetBtn.title = "Remove from my lists (the tasks stay online)";
+    forgetBtn.addEventListener("click", () => forgetList(list.id));
+
+    li.appendChild(forgetBtn);
+    myListsUl.appendChild(li);
+  });
+}
 
 // ---------- RENDER ----------
 function render() {
@@ -199,6 +278,8 @@ onSnapshot(q, snapshot => {
   tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
   render();
 });
+
+renderMyLists();
 
 // ---------- EVENTS ----------
 addBtn.addEventListener("click", addTask);
