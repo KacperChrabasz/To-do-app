@@ -3,20 +3,26 @@
   --bg-start: #eef1ff;
   --bg-end: #f8eefc;
   --card: #ffffff;
+  --panel: rgba(255, 255, 255, 0.6);
   --text: #1f2430;
   --muted: #8a90a0;
   --accent: #5b6cff;
+  --accent-2: #b06cff;
   --danger: #e5484d;
   --border: #e4e6ee;
+  --shadow: 0 4px 14px rgba(31, 36, 48, 0.08);
 }
 
 :root[data-theme="dark"] {
   --card: #1c1f2a;
+  --panel: rgba(22, 25, 36, 0.7);
   --text: #eceef5;
   --muted: #8b91a3;
   --accent: #7d8aff;
+  --accent-2: #c08bff;
   --danger: #ff6b70;
   --border: #2a2e3c;
+  --shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 /* ---------- BASE ---------- */
@@ -50,22 +56,55 @@ body::before {
   opacity: 1;
 }
 
-.app {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 20px 16px 40px;
+/* ---------- PAGE LAYOUT (sidebar + main) ---------- */
+.layout {
+  display: flex;
+  min-height: 100vh;
 }
 
-/* ---------- ALL BUTTONS (shared look) ---------- */
+.sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  padding: 24px 16px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-title {
+  margin: 6px 4px 16px;
+  font-size: 1.1rem;
+}
+
+.app {
+  flex: 1;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 24px 18px 40px;
+}
+
+/* ---------- BUTTONS (shared look) ---------- */
 button {
   font-family: inherit;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.4s ease, border-color 0.4s ease, opacity 0.2s ease;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.3s ease,
+              border-color 0.3s ease, color 0.3s ease;
 }
 
-/* small squish when pressed, feels more like a phone app */
+/* small squish when pressed */
 button:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ---------- HEADER + SWITCH ---------- */
@@ -73,12 +112,16 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 h1 {
   margin: 0;
-  font-size: 1.7rem;
+  font-size: 1.8rem;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .subtitle {
@@ -138,134 +181,155 @@ h1 {
 /* ---------- SHARE ROW (invite link + new list) ---------- */
 .share-row {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 18px;
 }
 
 .share-row button {
   flex: 1;
-  padding: 12px;
-  border-radius: 12px;
+  padding: 12px 14px;
+  border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--text);
   font-size: 0.95rem;
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow);
 }
 
 .share-row button:hover {
+  transform: translateY(-2px);
   border-color: var(--accent);
+  box-shadow: 0 8px 20px rgba(91, 108, 255, 0.18);
 }
 
 /* ---------- ADD FORM ---------- */
 .add-row {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 16px;
 }
 
 .add-row input {
   flex: 1;
   min-width: 0;
-  padding: 14px;
+  padding: 15px 16px;
   font-size: 16px; /* 16px stops the iPhone from zooming in */
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--card);
   color: var(--text);
-  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+  box-shadow: var(--shadow);
+  transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.3s ease;
 }
 
 .add-row input:focus {
-  outline: 2px solid var(--accent);
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(91, 108, 255, 0.2);
 }
 
 /* the + button */
 .add-row button {
-  width: 52px;
+  width: 56px;
+  flex-shrink: 0;
   padding: 0;
   border: none;
-  border-radius: 12px;
-  background: var(--accent);
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #fff;
-  font-size: 1.6rem;
+  font-size: 1.7rem;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(91, 108, 255, 0.35);
+  box-shadow: 0 6px 16px rgba(91, 108, 255, 0.35);
+}
+
+.add-row button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(91, 108, 255, 0.45);
 }
 
 /* ---------- FILTERS (All / Active / Done) ---------- */
 .filters {
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 4px;
+  background: var(--card);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
 }
 
 .filters button {
   flex: 1;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--card);
+  padding: 9px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
   color: var(--muted);
   font-size: 0.9rem;
   font-weight: 600;
 }
 
 .filters button.active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #fff;
+  box-shadow: 0 4px 12px rgba(91, 108, 255, 0.3);
 }
 
 /* ---------- TASK LIST ---------- */
-ul {
+#taskList {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-li {
+#taskList li {
   display: flex;
   align-items: center;
   gap: 12px;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 8px;
-  transition: background 0.4s ease, border-color 0.4s ease;
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+  transition: background 0.4s ease, border-color 0.4s ease, opacity 0.3s ease;
 }
 
-li input[type="checkbox"] {
+#taskList li.done {
+  opacity: 0.75;
+}
+
+#taskList li input[type="checkbox"] {
   width: 22px;
   height: 22px;
   accent-color: var(--accent);
   flex-shrink: 0;
+  cursor: pointer;
 }
 
-li .text {
+#taskList li .text {
   flex: 1;
   word-break: break-word;
 }
 
-li.done .text {
+#taskList li.done .text {
   text-decoration: line-through;
   color: var(--muted);
 }
 
 /* ✏️ and 🗑️ buttons on each task */
-li button {
+#taskList li button {
   background: none;
   border: none;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: 10px;
   flex-shrink: 0;
 }
 
-li button:hover {
+#taskList li button:hover {
   background: var(--border);
 }
 
@@ -280,7 +344,7 @@ footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 14px;
+  margin-top: 16px;
   color: var(--muted);
   font-size: 0.9rem;
 }
@@ -291,37 +355,109 @@ footer button {
   color: var(--danger);
   font-size: 0.9rem;
   font-weight: 600;
-  padding: 8px;
-}
-/* ---------- MY LISTS ---------- */
-.my-lists {
-  margin-top: 30px;
+  padding: 8px 12px;
+  border-radius: 999px;
 }
 
-.my-lists h2 {
-  font-size: 1.1rem;
-  margin: 0 0 10px;
+footer button:hover {
+  background: rgba(229, 72, 77, 0.12);
 }
 
-.my-lists li {
-  justify-content: space-between;
+/* ---------- MY LISTS (sidebar) ---------- */
+#myLists {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.my-lists li.current {
+#myLists li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+#myLists li:hover {
+  background: var(--card);
+}
+
+#myLists li.current {
+  background: var(--card);
   border-color: var(--accent);
+  box-shadow: var(--shadow);
 }
 
-.my-lists .list-link {
+#myLists .list-link {
   flex: 1;
   color: var(--text);
   text-decoration: none;
   font-weight: 600;
+  font-size: 0.95rem;
   word-break: break-word;
 }
 
 .current-tag {
   color: var(--accent);
-  font-size: 0.8rem;
-  margin-left: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
   white-space: nowrap;
+}
+
+#myLists li button {
+  background: none;
+  border: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+#myLists li button:hover {
+  background: var(--border);
+  color: var(--danger);
+}
+
+#myLists .empty {
+  text-align: left;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+
+/* ---------- PHONE LAYOUT (sidebar moves to the top) ---------- */
+@media (max-width: 700px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 16px;
+  }
+
+  .sidebar-title {
+    margin: 0 0 10px;
+  }
+
+  #myLists {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  #myLists li {
+    flex-shrink: 0;
+    margin-bottom: 0;
+  }
 }

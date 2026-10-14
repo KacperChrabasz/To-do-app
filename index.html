@@ -7,47 +7,51 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app">
+  <div class="layout">
 
-    <header>
-      <div>
-        <h1>My Tasks</h1>
-        <div class="subtitle" id="counter"></div>
+    <aside class="sidebar">
+      <h2 class="sidebar-title">📋 My lists</h2>
+      <ul id="myLists"></ul>
+    </aside>
+
+    <main class="app">
+
+      <header>
+        <div>
+          <h1>My Tasks</h1>
+          <div class="subtitle" id="counter"></div>
+        </div>
+
+        <label class="switch" aria-label="Toggle dark mode">
+          <input type="checkbox" id="themeToggle">
+          <span class="slider"></span>
+        </label>
+      </header>
+
+      <div class="share-row">
+        <button id="shareBtn">🔗 Copy invite link</button>
+        <button id="newListBtn">➕ New list</button>
       </div>
 
-      <label class="switch" aria-label="Toggle dark mode">
-        <input type="checkbox" id="themeToggle">
-        <span class="slider"></span>
-      </label>
-    </header>
+      <div class="add-row">
+        <input type="text" id="taskInput" placeholder="Add a new task..." maxlength="100" autocomplete="off">
+        <button id="addBtn" aria-label="Add task">+</button>
+      </div>
 
-    <div class="share-row">
-      <button id="shareBtn">🔗 Copy invite link</button>
-      <button id="newListBtn">➕ New list</button>
-    </div>
+      <div class="filters">
+        <button data-filter="all" class="active">All</button>
+        <button data-filter="active">Active</button>
+        <button data-filter="completed">Done</button>
+      </div>
 
-    <div class="add-row">
-      <input type="text" id="taskInput" placeholder="Add a new task..." maxlength="100" autocomplete="off">
-      <button id="addBtn" aria-label="Add task">+</button>
-    </div>
+      <ul id="taskList"></ul>
 
-    <div class="filters">
-      <button data-filter="all" class="active">All</button>
-      <button data-filter="active">Active</button>
-      <button data-filter="completed">Done</button>
-    </div>
+      <footer>
+        <span id="footerInfo"></span>
+        <button id="clearBtn">Clear completed</button>
+      </footer>
 
-    <ul id="taskList"></ul>
-
-    <footer>
-      <span id="footerInfo"></span>
-      <button id="clearBtn">Clear completed</button>
-    </footer>
-
-    <section class="my-lists">
-      <h2>My lists</h2>
-      <ul id="myLists"></ul>
-    </section>
+    </main>
 
   </div>
 
