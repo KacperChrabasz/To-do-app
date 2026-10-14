@@ -461,3 +461,121 @@ footer button:hover {
     margin-bottom: 0;
   }
 }
+/* ---------- TEXT SIZE ---------- */
+html { font-size: 16px; }
+html[data-size="small"] { font-size: 14px; }
+html[data-size="large"] { font-size: 19px; }
+body { font-size: 1rem; }
+
+/* ---------- HEADER: menu button + title ---------- */
+.title-box {
+  flex: 1;
+  min-width: 0;
+}
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  margin-right: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 1.3rem;
+  box-shadow: var(--shadow);
+}
+
+.icon-btn:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+/* ---------- SETTINGS OVERLAY + PANEL ---------- */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 40;
+}
+
+.settings-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.settings-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(320px, 88vw);
+  padding: 22px 18px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.2);
+  transform: translateX(100%);
+  transition: transform 0.35s ease;
+  z-index: 50;
+  overflow-y: auto;
+}
+
+.settings-panel.open {
+  transform: translateX(0);
+}
+
+.settings-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.settings-head h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.settings-head button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.settings-head button:hover {
+  background: var(--border);
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.setting-row select {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.setting-row input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}

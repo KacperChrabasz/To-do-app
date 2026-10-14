@@ -17,6 +17,119 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// ---------- SETTINGS (saved in this browser) ----------
+const SETTINGS_KEY = "todo-settings";
+
+const defaultSettings = {
+  lang: navigator.language.startsWith("pl") ? "pl" : "en",
+  size: "normal",
+  confirmDelete: false
+};
+
+function loadSettings() {
+  try {
+    return { ...defaultSettings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) };
+  } catch (e) {
+    return { ...defaultSettings };
+  }
+}
+
+function saveSettings() {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+let settings = loadSettings();
+
+// ---------- TRANSLATIONS ----------
+// To add a language, copy the "en" block, change the name, and translate the text.
+const translations = {
+  en: {
+    appTitle: "My Tasks",
+    myLists: "📋 My lists",
+    settings: "⚙️ Settings",
+    language: "Language",
+    textSize: "Text size",
+    small: "Small",
+    normal: "Normal",
+    large: "Large",
+    confirmDelete: "Ask before deleting",
+    copyLink: "🔗 Copy invite link",
+    linkCopied: "✅ Link copied!",
+    copyPrompt: "Copy this link and send it to your group:",
+    newList: "➕ New list",
+    newListPrompt: "Name your new list:",
+    defaultListName: "My list",
+    sharedList: "Shared list",
+    addPlaceholder: "Add a new task...",
+    addTask: "Add task",
+    all: "All",
+    active: "Active",
+    done: "Done",
+    clearCompleted: "Clear completed",
+    noTasks: "No tasks yet. Add the first one! ✨",
+    nothingHere: "Nothing here.",
+    tasksLeft: n => n === 1 ? "1 task left" : `${n} tasks left`,
+    total: n => `${n} total`,
+    editPrompt: "Edit task:",
+    confirmDeleteMsg: "Delete this task?",
+    openNow: "(open now)",
+    removeList: "Remove from my lists",
+    removeListTitle: "Remove from my lists (the tasks stay online)",
+    noLists: "No lists yet.",
+    editTask: "Edit task",
+    deleteTask: "Delete task",
+    openSettings: "Open settings",
+    closeSettings: "Close settings",
+    darkMode: "Toggle dark mode"
+  },
+  pl: {
+    appTitle: "Moje zadania",
+    myLists: "📋 Moje listy",
+    settings: "⚙️ Ustawienia",
+    language: "Język",
+    textSize: "Rozmiar tekstu",
+    small: "Mały",
+    normal: "Normalny",
+    large: "Duży",
+    confirmDelete: "Pytaj przed usunięciem",
+    copyLink: "🔗 Kopiuj link zaproszenia",
+    linkCopied: "✅ Link skopiowany!",
+    copyPrompt: "Skopiuj ten link i wyślij go grupie:",
+    newList: "➕ Nowa lista",
+    newListPrompt: "Nazwij nową listę:",
+    defaultListName: "Moja lista",
+    sharedList: "Udostępniona lista",
+    addPlaceholder: "Dodaj nowe zadanie...",
+    addTask: "Dodaj zadanie",
+    all: "Wszystkie",
+    active: "Aktywne",
+    done: "Gotowe",
+    clearCompleted: "Usuń ukończone",
+    noTasks: "Brak zadań. Dodaj pierwsze! ✨",
+    nothingHere: "Tu nic nie ma.",
+    tasksLeft: n => `Zostało: ${n}`,
+    total: n => `Razem: ${n}`,
+    editPrompt: "Edytuj zadanie:",
+    confirmDeleteMsg: "Usunąć to zadanie?",
+    openNow: "(otwarta)",
+    removeList: "Usuń z moich list",
+    removeListTitle: "Usuń z moich list (zadania zostają online)",
+    noLists: "Brak list.",
+    editTask: "Edytuj zadanie",
+    deleteTask: "Usuń zadanie",
+    openSettings: "Otwórz ustawienia",
+    closeSettings: "Zamknij ustawienia",
+    darkMode: "Przełącz tryb ciemny"
+  }
+};
+
+// Returns the text for a key in the chosen language
+function t(key, value) {
+  const dict = translations[settings.lang] || translations.en;
+  const text = dict[key] ?? translations.en[key] ?? key;
+  return typeof text === "function" ? text(value) : text;
+}
+
 // ---------- MY LISTS (saved in this browser only) ----------
 const MY_LISTS_KEY = "todo-my-lists";
 
@@ -36,7 +149,7 @@ function saveMyLists(lists) {
 function rememberList(id, name) {
   const lists = getMyLists();
   const existing = lists.find(l => l.id === id);
-  const finalName = name || (existing ? existing.name : "Shared list");
+  const finalName = name || (existing ? existing.name : null);
 
   const others = lists.filter(l => l.id !== id);
   others.unshift({ id: id, name: finalName, lastOpened: Date.now() });
@@ -58,7 +171,7 @@ function getListId() {
   if (!id) {
     id = Math.random().toString(36).substring(2, 10);
     window.history.replaceState({}, "", "?list=" + id);
-    rememberList(id, "My list");
+    rememberList(id, t("defaultListName"));
   }
   return id;
 }
@@ -104,6 +217,14 @@ const shareBtn = document.getElementById("shareBtn");
 const newListBtn = document.getElementById("newListBtn");
 const myListsUl = document.getElementById("myLists");
 
+const menuBtn = document.getElementById("menuBtn");
+const settingsPanel = document.getElementById("settingsPanel");
+const settingsOverlay = document.getElementById("settingsOverlay");
+const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+const languageSelect = document.getElementById("languageSelect");
+const textSizeSelect = document.getElementById("textSizeSelect");
+const confirmToggle = document.getElementById("confirmToggle");
+
 // ---------- DATA ----------
 let tasks = [];
 let currentFilter = "all";
@@ -135,8 +256,14 @@ async function deleteTask(id) {
   await deleteDoc(taskDoc(id));
 }
 
+// Asks first if the setting is turned on
+function requestDelete(id) {
+  if (settings.confirmDelete && !confirm(t("confirmDeleteMsg"))) return;
+  deleteTask(id);
+}
+
 async function editTask(task) {
-  const newText = prompt("Edit task:", task.text);
+  const newText = prompt(t("editPrompt"), task.text);
 
   if (newText !== null && newText.trim() !== "") {
     await updateDoc(taskDoc(task.id), { text: newText.trim() });
@@ -158,23 +285,23 @@ shareBtn.addEventListener("click", async () => {
 
   try {
     await navigator.clipboard.writeText(link);
-    shareBtn.textContent = "✅ Link copied!";
+    shareBtn.textContent = t("linkCopied");
   } catch (e) {
-    prompt("Copy this link and send it to your group:", link);
+    prompt(t("copyPrompt"), link);
   }
 
   setTimeout(() => {
-    shareBtn.textContent = "🔗 Copy invite link";
+    shareBtn.textContent = t("copyLink");
   }, 2000);
 });
 
 // ---------- NEW LIST BUTTON ----------
 newListBtn.addEventListener("click", () => {
-  const name = prompt("Name your new list:", "My list");
+  const name = prompt(t("newListPrompt"), t("defaultListName"));
   if (name === null) return; // user pressed Cancel
 
   const newId = Math.random().toString(36).substring(2, 10);
-  rememberList(newId, name.trim() || "My list");
+  rememberList(newId, name.trim() || t("defaultListName"));
 
   window.location.href = window.location.pathname + "?list=" + newId;
 });
@@ -188,7 +315,7 @@ function renderMyLists() {
   if (lists.length === 0) {
     const empty = document.createElement("li");
     empty.className = "empty";
-    empty.textContent = "No lists yet.";
+    empty.textContent = t("noLists");
     myListsUl.appendChild(empty);
     return;
   }
@@ -200,21 +327,21 @@ function renderMyLists() {
     const link = document.createElement("a");
     link.className = "list-link";
     link.href = window.location.pathname + "?list=" + list.id;
-    link.textContent = list.name;
+    link.textContent = list.name || t("sharedList");
 
     li.appendChild(link);
 
     if (list.id === listId) {
       const tag = document.createElement("span");
       tag.className = "current-tag";
-      tag.textContent = "(open now)";
+      tag.textContent = t("openNow");
       li.appendChild(tag);
     }
 
     const forgetBtn = document.createElement("button");
     forgetBtn.textContent = "✖";
-    forgetBtn.setAttribute("aria-label", "Remove from my lists");
-    forgetBtn.title = "Remove from my lists (the tasks stay online)";
+    forgetBtn.setAttribute("aria-label", t("removeList"));
+    forgetBtn.title = t("removeListTitle");
     forgetBtn.addEventListener("click", () => forgetList(list.id));
 
     li.appendChild(forgetBtn);
@@ -233,9 +360,7 @@ function render() {
   if (visible.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty";
-    empty.textContent = tasks.length === 0
-      ? "No tasks yet. Add the first one! ✨"
-      : "Nothing here.";
+    empty.textContent = tasks.length === 0 ? t("noTasks") : t("nothingHere");
     taskList.appendChild(empty);
   }
 
@@ -254,22 +379,62 @@ function render() {
 
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️";
-    editBtn.setAttribute("aria-label", "Edit task");
+    editBtn.setAttribute("aria-label", t("editTask"));
     editBtn.addEventListener("click", () => editTask(task));
 
     const delBtn = document.createElement("button");
     delBtn.textContent = "🗑️";
-    delBtn.setAttribute("aria-label", "Delete task");
-    delBtn.addEventListener("click", () => deleteTask(task.id));
+    delBtn.setAttribute("aria-label", t("deleteTask"));
+    delBtn.addEventListener("click", () => requestDelete(task.id));
 
     li.append(checkbox, span, editBtn, delBtn);
     taskList.appendChild(li);
   });
 
   const left = tasks.filter(t => !t.done).length;
-  counter.textContent = left === 1 ? "1 task left" : left + " tasks left";
-  footerInfo.textContent = tasks.length + " total";
+  counter.textContent = t("tasksLeft", left);
+  footerInfo.textContent = t("total", tasks.length);
   clearBtn.style.visibility = tasks.some(t => t.done) ? "visible" : "hidden";
+}
+
+// ---------- SETTINGS PANEL ----------
+// Puts every translated text on the page, and the saved settings into the controls
+function applySettings() {
+  document.documentElement.lang = settings.lang;
+  document.documentElement.dataset.size = settings.size;
+
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+
+  document.querySelectorAll("[data-i18n-aria]").forEach(el => {
+    el.setAttribute("aria-label", t(el.dataset.i18nAria));
+  });
+
+  languageSelect.value = settings.lang;
+  textSizeSelect.value = settings.size;
+  confirmToggle.checked = settings.confirmDelete;
+}
+
+// Redraws everything in the current language
+function refreshAll() {
+  applySettings();
+  render();
+  renderMyLists();
+}
+
+function openSettings() {
+  settingsPanel.classList.add("open");
+  settingsOverlay.classList.add("open");
+}
+
+function closeSettings() {
+  settingsPanel.classList.remove("open");
+  settingsOverlay.classList.remove("open");
 }
 
 // ---------- REAL-TIME LISTENER ----------
@@ -278,8 +443,6 @@ onSnapshot(q, snapshot => {
   tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
   render();
 });
-
-renderMyLists();
 
 // ---------- EVENTS ----------
 addBtn.addEventListener("click", addTask);
@@ -298,3 +461,33 @@ filterButtons.forEach(btn => {
     render();
   });
 });
+
+menuBtn.addEventListener("click", openSettings);
+closeSettingsBtn.addEventListener("click", closeSettings);
+settingsOverlay.addEventListener("click", closeSettings);
+
+// Escape key closes the panel
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeSettings();
+});
+
+languageSelect.addEventListener("change", () => {
+  settings.lang = languageSelect.value;
+  saveSettings();
+  refreshAll();
+});
+
+textSizeSelect.addEventListener("change", () => {
+  settings.size = textSizeSelect.value;
+  saveSettings();
+  applySettings();
+});
+
+confirmToggle.addEventListener("change", () => {
+  settings.confirmDelete = confirmToggle.checked;
+  saveSettings();
+});
+
+// ---------- START ----------
+applySettings();
+renderMyLists();
