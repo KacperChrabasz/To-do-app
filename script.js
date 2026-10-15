@@ -29,6 +29,9 @@ const PALETTES = {
   purple: ["#8b5cf6", "#d946ef"]
 };
 
+// The tags a task can have. The names shown on screen come from the translations (tag_work, tag_school...)
+const TAGS = ["work", "school", "home", "personal", "shopping"];
+
 // Picks a starting language from the browser, if we have a translation for it
 function guessLanguage() {
   const code = navigator.language.slice(0, 2);
@@ -86,6 +89,14 @@ const translations = {
     sortNewest: "Newest first",
     sortAz: "A → Z",
     sortZa: "Z → A",
+    tagLabel: "Tag",
+    tagNone: "No tag",
+    tagAll: "All tags",
+    tag_work: "Work",
+    tag_school: "School",
+    tag_home: "Home",
+    tag_personal: "Personal",
+    tag_shopping: "Shopping",
     copyLink: "🔗 Copy invite link",
     linkCopied: "✅ Link copied!",
     copyPrompt: "Copy this link and send it to your group:",
@@ -142,6 +153,14 @@ const translations = {
     sortNewest: "Najnowsze",
     sortAz: "A → Z",
     sortZa: "Z → A",
+    tagLabel: "Etykieta",
+    tagNone: "Bez etykiety",
+    tagAll: "Wszystkie",
+    tag_work: "Praca",
+    tag_school: "Szkoła",
+    tag_home: "Dom",
+    tag_personal: "Osobiste",
+    tag_shopping: "Zakupy",
     copyLink: "🔗 Kopiuj link zaproszenia",
     linkCopied: "✅ Link skopiowany!",
     copyPrompt: "Skopiuj ten link i wyślij go grupie:",
@@ -198,6 +217,14 @@ const translations = {
     sortNewest: "Más nuevas",
     sortAz: "A → Z",
     sortZa: "Z → A",
+    tagLabel: "Etiqueta",
+    tagNone: "Sin etiqueta",
+    tagAll: "Todas",
+    tag_work: "Trabajo",
+    tag_school: "Escuela",
+    tag_home: "Casa",
+    tag_personal: "Personal",
+    tag_shopping: "Compras",
     copyLink: "🔗 Copiar enlace de invitación",
     linkCopied: "✅ ¡Enlace copiado!",
     copyPrompt: "Copia este enlace y envíalo a tu grupo:",
@@ -254,6 +281,14 @@ const translations = {
     sortNewest: "Neueste zuerst",
     sortAz: "A → Z",
     sortZa: "Z → A",
+    tagLabel: "Kategorie",
+    tagNone: "Keine Kategorie",
+    tagAll: "Alle",
+    tag_work: "Arbeit",
+    tag_school: "Schule",
+    tag_home: "Zuhause",
+    tag_personal: "Privat",
+    tag_shopping: "Einkaufen",
     copyLink: "🔗 Einladungslink kopieren",
     linkCopied: "✅ Link kopiert!",
     copyPrompt: "Kopiere diesen Link und schick ihn deiner Gruppe:",
@@ -310,6 +345,14 @@ const translations = {
     sortNewest: "Plus récentes",
     sortAz: "A → Z",
     sortZa: "Z → A",
+    tagLabel: "Étiquette",
+    tagNone: "Sans étiquette",
+    tagAll: "Toutes",
+    tag_work: "Travail",
+    tag_school: "École",
+    tag_home: "Maison",
+    tag_personal: "Perso",
+    tag_shopping: "Courses",
     copyLink: "🔗 Copier le lien d'invitation",
     linkCopied: "✅ Lien copié !",
     copyPrompt: "Copie ce lien et envoie-le à ton groupe :",
@@ -366,6 +409,14 @@ const translations = {
     sortNewest: "Mais recentes",
     sortAz: "A → Z",
     sortZa: "Z → A",
+    tagLabel: "Etiqueta",
+    tagNone: "Sem etiqueta",
+    tagAll: "Todas",
+    tag_work: "Trabalho",
+    tag_school: "Escola",
+    tag_home: "Casa",
+    tag_personal: "Pessoal",
+    tag_shopping: "Compras",
     copyLink: "🔗 Copiar link de convite",
     linkCopied: "✅ Link copiado!",
     copyPrompt: "Copia este link e envia-o ao teu grupo:",
@@ -497,6 +548,8 @@ const myListsUl = document.getElementById("myLists");
 const progressFill = document.getElementById("progressFill");
 const progressText = document.getElementById("progressText");
 const sortSelect = document.getElementById("sortSelect");
+const tagSelect = document.getElementById("tagSelect");
+const tagFiltersBox = document.getElementById("tagFilters");
 
 const menuBtn = document.getElementById("menuBtn");
 const settingsPanel = document.getElementById("settingsPanel");
@@ -512,6 +565,7 @@ const confirmToggle = document.getElementById("confirmToggle");
 // ---------- DATA ----------
 let tasks = [];
 let currentFilter = "all";
+let currentTag = "all"; // which tag chip is selected: "all" or one of TAGS
 let lastPercent = null; // remembers the last progress, so milestones fire only when crossed
 
 // ---------- ACTIONS (these write to Firebase) ----------
@@ -529,6 +583,7 @@ async function addTask() {
   await addDoc(tasksRef, {
     text: text,
     done: false,
+    tag: tagSelect.value, // "" means no tag
     createdAt: Date.now()
   });
 }
@@ -702,6 +757,26 @@ function renderMyLists() {
   });
 }
 
+// ---------- TAG FILTER BUTTONS ----------
+// Builds the little buttons under the filters: "All tags", then one for each tag
+function renderTagFilters() {
+  tagFiltersBox.innerHTML = "";
+
+  ["all", ...TAGS].forEach(key => {
+    const btn = document.createElement("button");
+    btn.className = "tag-chip" + (currentTag === key ? " active" : "");
+    btn.textContent = key === "all" ? t("tagAll") : t("tag_" + key);
+
+    btn.addEventListener("click", () => {
+      currentTag = key;
+      renderTagFilters();
+      render();
+    });
+
+    tagFiltersBox.appendChild(btn);
+  });
+}
+
 // ---------- SORTING ----------
 // Puts the tasks in the order chosen in the "Sort by" dropdown
 function sortTasks(list) {
@@ -723,6 +798,9 @@ function render() {
   let visible = tasks;
   if (currentFilter === "active") visible = tasks.filter(task => !task.done);
   if (currentFilter === "completed") visible = tasks.filter(task => task.done);
+
+  // 1a. Filter by the selected tag
+  if (currentTag !== "all") visible = visible.filter(task => task.tag === currentTag);
 
   // 1b. Sort the tasks
   visible = sortTasks(visible);
@@ -755,6 +833,16 @@ function render() {
     span.className = "text";
     span.textContent = task.text;
 
+    li.append(checkbox, span);
+
+    // A colored tag chip, only if the task has a tag
+    if (task.tag) {
+      const chip = document.createElement("span");
+      chip.className = "tag tag-" + task.tag;
+      chip.textContent = t("tag_" + task.tag);
+      li.appendChild(chip);
+    }
+
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️";
     editBtn.setAttribute("aria-label", t("editTask"));
@@ -765,7 +853,7 @@ function render() {
     delBtn.setAttribute("aria-label", t("deleteTask"));
     delBtn.addEventListener("click", () => requestDelete(task.id));
 
-    li.append(checkbox, span, editBtn, delBtn);
+    li.append(editBtn, delBtn);
     taskList.appendChild(li);
   });
 
@@ -818,6 +906,7 @@ function applySettings() {
 // Redraws everything in the current language
 function refreshAll() {
   applySettings();
+  renderTagFilters();
   render();
   renderMyLists();
 }
@@ -922,4 +1011,5 @@ sortSelect.addEventListener("change", () => {
 
 // ---------- START ----------
 applySettings();
+renderTagFilters();
 renderMyLists();

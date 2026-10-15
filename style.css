@@ -303,7 +303,7 @@ h1 {
 .add-row {
   display: flex;
   gap: 10px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .add-row input {
@@ -348,6 +348,42 @@ h1 {
   box-shadow: 0 12px 26px rgba(91, 108, 255, 0.45);
 }
 
+/* ---------- TAG PICK (choose a tag for the new task) ---------- */
+.tag-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* ---------- SMALL DROPDOWNS (tag pick + sort) ---------- */
+.tag-pick select,
+.sort-row select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 8px 32px 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background-color: var(--card);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235b6cff' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tag-pick select:focus,
+.sort-row select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 /* ---------- FILTERS (segmented control) ---------- */
 .filters {
   display: flex;
@@ -381,6 +417,38 @@ h1 {
   box-shadow: 0 4px 14px rgba(91, 108, 255, 0.3);
 }
 
+/* ---------- TAG FILTER CHIPS ---------- */
+.tag-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 4px;
+  overflow-x: auto;
+}
+
+.tag-chip {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tag-chip:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.tag-chip.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-color: transparent;
+  color: #fff;
+}
+
 /* ---------- SORT DROPDOWN ---------- */
 .sort-row {
   display: flex;
@@ -391,28 +459,6 @@ h1 {
   color: var(--muted);
   font-size: 0.85rem;
   font-weight: 600;
-}
-
-.sort-row select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding: 8px 32px 8px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background-color: var(--card);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235b6cff' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 11px center;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sort-row select:focus {
-  outline: none;
-  border-color: var(--accent);
 }
 
 /* ---------- TASK LIST ---------- */
@@ -497,6 +543,28 @@ h1 {
   padding: 36px 16px;
   font-size: 0.95rem;
 }
+
+/* ---------- TAG CHIPS ON TASKS ---------- */
+.tag {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tag-work     { background: rgba(91, 108, 255, 0.15);  color: #4350d8; }
+.tag-school   { background: rgba(139, 92, 246, 0.15);  color: #6d3fd9; }
+.tag-home     { background: rgba(32, 180, 122, 0.16);  color: #12805a; }
+.tag-personal { background: rgba(255, 92, 138, 0.15);  color: #d1305f; }
+.tag-shopping { background: rgba(255, 138, 61, 0.18);  color: #c25a10; }
+
+:root[data-theme="dark"] .tag-work     { color: #a0aaff; }
+:root[data-theme="dark"] .tag-school   { color: #c4a8ff; }
+:root[data-theme="dark"] .tag-home     { color: #5fe0aa; }
+:root[data-theme="dark"] .tag-personal { color: #ff9db9; }
+:root[data-theme="dark"] .tag-shopping { color: #ffb77d; }
 
 /* ---------- FOOTER ---------- */
 footer {

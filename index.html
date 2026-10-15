@@ -51,11 +51,27 @@
         <button id="addBtn" data-i18n-aria="addTask" aria-label="Add task">+</button>
       </div>
 
+      <div class="tag-pick">
+        <!-- TAG PICK = a small box with the word "Tag" and a menu to choose a category for the NEW task -->
+        <label for="tagSelect" data-i18n="tagLabel">Tag</label>
+        <select id="tagSelect">
+          <option value="" data-i18n="tagNone">No tag</option>
+          <option value="work" data-i18n="tag_work">Work</option>
+          <option value="school" data-i18n="tag_school">School</option>
+          <option value="home" data-i18n="tag_home">Home</option>
+          <option value="personal" data-i18n="tag_personal">Personal</option>
+          <option value="shopping" data-i18n="tag_shopping">Shopping</option>
+        </select>
+      </div>
+
       <div class="filters">
         <button data-filter="all" class="active" data-i18n="all">All</button>
         <button data-filter="active" data-i18n="active">Active</button>
         <button data-filter="completed" data-i18n="done">Done</button>
       </div>
+
+      <div class="tag-filters" id="tagFilters"></div>
+      <!-- TAG FILTERS = an empty box. The JavaScript fills it with little buttons, one for each tag -->
 
       <div class="sort-row">
         <!-- SORT ROW = a small box with the words "Sort by" and a menu to pick the order of the tasks -->
