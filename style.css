@@ -89,28 +89,40 @@ html { font-size: 16px; }
 html[data-size="small"] { font-size: 14px; }
 html[data-size="large"] { font-size: 19px; }
 
-/* ---------- PAGE LAYOUT (sidebar + main) ---------- */
+/* ---------- PAGE LAYOUT (left sidebar | app | right sidebar) ---------- */
 .layout {
-  display: flex;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 260px;
+  grid-template-areas: "left main right";
   min-height: 100vh;
 }
 
-.sidebar {
-  width: 260px;
-  flex-shrink: 0;
-  padding: 26px 18px;
-  background: var(--panel);
-  border-right: 1px solid var(--border);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+/* Both sidebars share the same look. They stay on screen while the page scrolls */
+.sidebar,
+.sidebar-right {
   position: sticky;
   top: 0;
+  align-self: start;
   height: 100vh;
+  padding: 26px 18px;
+  background: var(--panel);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   overflow-y: auto;
 }
 
+.sidebar {
+  grid-area: left;
+  border-right: 1px solid var(--border);
+}
+
+.sidebar-right {
+  grid-area: right;
+  border-left: 1px solid var(--border);
+}
+
 .sidebar-title {
-  margin: 4px 6px 18px;
+  margin: 4px 6px 14px;
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -118,10 +130,15 @@ html[data-size="large"] { font-size: 19px; }
   color: var(--muted);
 }
 
+.side-section {
+  margin-bottom: 28px;
+}
+
+/* The app sits in the exact middle, between the two sidebars */
 .app {
-  flex: 1;
+  grid-area: main;
   width: 100%;
-  max-width: 540px;
+  max-width: 600px;
   margin: 0 auto;
   padding: 26px 20px 48px;
 }
@@ -299,11 +316,11 @@ h1 {
   box-shadow: var(--shadow-lift);
 }
 
-/* ---------- ADD FORM ---------- */
+/* ---------- ADD FORM (input + tag menu + button) ---------- */
 .add-row {
   display: flex;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 18px;
 }
 
 .add-row input {
@@ -348,24 +365,22 @@ h1 {
   box-shadow: 0 12px 26px rgba(91, 108, 255, 0.45);
 }
 
-/* ---------- TAG PICK (choose a tag for the new task) ---------- */
-.tag-pick {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
-  color: var(--muted);
-  font-size: 0.85rem;
-  font-weight: 600;
+/* the small tag menu inside the add row */
+.add-row .tag-select {
+  width: 118px;
+  flex-shrink: 0;
+  padding: 0 30px 0 12px;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
 }
 
-/* ---------- SMALL DROPDOWNS (tag pick + sort) ---------- */
-.tag-pick select,
-.sort-row select {
+/* ---------- SMALL DROPDOWNS (tag menu + sort menu) ---------- */
+.tag-select,
+.side-section select {
   appearance: none;
   -webkit-appearance: none;
-  padding: 8px 32px 8px 12px;
-  border-radius: 10px;
+  padding: 10px 32px 10px 12px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background-color: var(--card);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235b6cff' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -378,8 +393,12 @@ h1 {
   cursor: pointer;
 }
 
-.tag-pick select:focus,
-.sort-row select:focus {
+.side-section select {
+  width: 100%;
+}
+
+.tag-select:focus,
+.side-section select:focus {
   outline: none;
   border-color: var(--accent);
 }
@@ -388,7 +407,7 @@ h1 {
 .filters {
   display: flex;
   gap: 4px;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
   padding: 4px;
   background: var(--card);
   border: 1px solid var(--border);
@@ -417,24 +436,23 @@ h1 {
   box-shadow: 0 4px 14px rgba(91, 108, 255, 0.3);
 }
 
-/* ---------- TAG FILTER CHIPS ---------- */
+/* ---------- TAG FILTER CHIPS (right sidebar list) ---------- */
 .tag-filters {
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-  padding-bottom: 4px;
-  overflow-x: auto;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .tag-chip {
-  flex-shrink: 0;
-  padding: 7px 14px;
-  border-radius: 999px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   font-weight: 600;
+  text-align: left;
   white-space: nowrap;
 }
 
@@ -447,18 +465,6 @@ h1 {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   border-color: transparent;
   color: #fff;
-}
-
-/* ---------- SORT DROPDOWN ---------- */
-.sort-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-bottom: 14px;
-  color: var(--muted);
-  font-size: 0.85rem;
-  font-weight: 600;
 }
 
 /* ---------- TASK LIST ---------- */
@@ -590,7 +596,7 @@ footer button:hover {
   background: rgba(229, 72, 77, 0.12);
 }
 
-/* ---------- MY LISTS (sidebar) ---------- */
+/* ---------- MY LISTS (left sidebar) ---------- */
 #myLists {
   list-style: none;
   margin: 0;
@@ -972,23 +978,69 @@ footer button:hover {
   }
 }
 
-/* ---------- PHONE LAYOUT (sidebar moves to the top) ---------- */
+/* ---------- MEDIUM SCREENS (small laptops): the tags move to a bar above the list ---------- */
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 230px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "left right"
+      "left main";
+  }
+
+  .sidebar-right {
+    position: static;
+    height: auto;
+    border-left: none;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 14px 32px;
+  }
+
+  .side-section {
+    margin-bottom: 0;
+  }
+
+  .tag-filters {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .tag-chip {
+    width: auto;
+    padding: 7px 14px;
+    border-radius: 999px;
+    text-align: center;
+  }
+}
+
+/* ---------- PHONE LAYOUT (everything stacks in one column) ---------- */
 @media (max-width: 700px) {
   .layout {
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      "left"
+      "right"
+      "main";
   }
 
   .sidebar {
-    width: 100%;
-    height: auto;
     position: static;
+    height: auto;
     border-right: none;
     border-bottom: 1px solid var(--border);
     padding: 16px;
   }
 
-  .sidebar-title {
-    margin: 0 0 10px;
+  .sidebar .sidebar-title,
+  .sidebar-right .sidebar-title {
+    margin: 0 0 8px;
   }
 
   #myLists {
@@ -1003,8 +1055,17 @@ footer button:hover {
     margin-bottom: 0;
   }
 
+  .sidebar-right {
+    padding: 14px 16px;
+    justify-content: flex-start;
+  }
+
   .app {
     padding: 20px 16px 40px;
+  }
+
+  .add-row .tag-select {
+    width: 96px;
   }
 }
 

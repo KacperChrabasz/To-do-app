@@ -48,13 +48,9 @@
 
       <div class="add-row">
         <input type="text" id="taskInput" data-i18n-placeholder="addPlaceholder" placeholder="Add a new task..." maxlength="100" autocomplete="off">
-        <button id="addBtn" data-i18n-aria="addTask" aria-label="Add task">+</button>
-      </div>
 
-      <div class="tag-pick">
-        <!-- TAG PICK = a small box with the word "Tag" and a menu to choose a category for the NEW task -->
-        <label for="tagSelect" data-i18n="tagLabel">Tag</label>
-        <select id="tagSelect">
+        <select id="tagSelect" class="tag-select" data-i18n-aria="tagLabel" aria-label="Tag">
+          <!-- TAG SELECT = a small menu next to the input. It picks the category for the NEW task -->
           <option value="" data-i18n="tagNone">No tag</option>
           <option value="work" data-i18n="tag_work">Work</option>
           <option value="school" data-i18n="tag_school">School</option>
@@ -62,26 +58,14 @@
           <option value="personal" data-i18n="tag_personal">Personal</option>
           <option value="shopping" data-i18n="tag_shopping">Shopping</option>
         </select>
+
+        <button id="addBtn" data-i18n-aria="addTask" aria-label="Add task">+</button>
       </div>
 
       <div class="filters">
         <button data-filter="all" class="active" data-i18n="all">All</button>
         <button data-filter="active" data-i18n="active">Active</button>
         <button data-filter="completed" data-i18n="done">Done</button>
-      </div>
-
-      <div class="tag-filters" id="tagFilters"></div>
-      <!-- TAG FILTERS = an empty box. The JavaScript fills it with little buttons, one for each tag -->
-
-      <div class="sort-row">
-        <!-- SORT ROW = a small box with the words "Sort by" and a menu to pick the order of the tasks -->
-        <label for="sortSelect" data-i18n="sortBy">Sort by</label>
-        <select id="sortSelect">
-          <option value="oldest" data-i18n="sortOldest">Oldest first</option>
-          <option value="newest" data-i18n="sortNewest">Newest first</option>
-          <option value="az" data-i18n="sortAz">A → Z</option>
-          <option value="za" data-i18n="sortZa">Z → A</option>
-        </select>
       </div>
 
       <ul id="taskList"></ul>
@@ -92,6 +76,26 @@
       </footer>
 
     </main>
+
+    <aside class="sidebar-right">
+      <!-- RIGHT SIDEBAR = a box on the right side of the page. It holds the tag filters and the sort menu -->
+
+      <div class="side-section">
+        <h2 class="sidebar-title" data-i18n="tagLabel">Tag</h2>
+        <div class="tag-filters" id="tagFilters"></div>
+        <!-- TAG FILTERS = an empty box. The JavaScript fills it with little buttons, one for each tag -->
+      </div>
+
+      <div class="side-section">
+        <h2 class="sidebar-title" data-i18n="sortBy">Sort by</h2>
+        <select id="sortSelect" data-i18n-aria="sortBy" aria-label="Sort by">
+          <option value="oldest" data-i18n="sortOldest">Oldest first</option>
+          <option value="newest" data-i18n="sortNewest">Newest first</option>
+          <option value="az" data-i18n="sortAz">A → Z</option>
+          <option value="za" data-i18n="sortZa">Z → A</option>
+        </select>
+      </div>
+    </aside>
 
   </div>
 
