@@ -352,7 +352,7 @@ h1 {
 .filters {
   display: flex;
   gap: 4px;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   padding: 4px;
   background: var(--card);
   border: 1px solid var(--border);
@@ -379,6 +379,40 @@ h1 {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #fff;
   box-shadow: 0 4px 14px rgba(91, 108, 255, 0.3);
+}
+
+/* ---------- SORT DROPDOWN ---------- */
+.sort-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 14px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.sort-row select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 8px 32px 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background-color: var(--card);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235b6cff' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sort-row select:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 /* ---------- TASK LIST ---------- */

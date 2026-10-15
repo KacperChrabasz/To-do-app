@@ -57,6 +57,17 @@
         <button data-filter="completed" data-i18n="done">Done</button>
       </div>
 
+      <div class="sort-row">
+        <!-- SORT ROW = a small box with the words "Sort by" and a menu to pick the order of the tasks -->
+        <label for="sortSelect" data-i18n="sortBy">Sort by</label>
+        <select id="sortSelect">
+          <option value="oldest" data-i18n="sortOldest">Oldest first</option>
+          <option value="newest" data-i18n="sortNewest">Newest first</option>
+          <option value="az" data-i18n="sortAz">A → Z</option>
+          <option value="za" data-i18n="sortZa">Z → A</option>
+        </select>
+      </div>
+
       <ul id="taskList"></ul>
 
       <footer>

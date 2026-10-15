@@ -41,7 +41,8 @@ const defaultSettings = {
   confirmDelete: false,
   accent: "blue",
   compact: false,
-  completedLast: false
+  completedLast: false,
+  sort: "oldest"
 };
 
 function loadSettings() {
@@ -80,6 +81,11 @@ const translations = {
     compact: "Compact list",
     completedLast: "Completed at the bottom",
     confirmDelete: "Ask before deleting",
+    sortBy: "Sort by",
+    sortOldest: "Oldest first",
+    sortNewest: "Newest first",
+    sortAz: "A → Z",
+    sortZa: "Z → A",
     copyLink: "🔗 Copy invite link",
     linkCopied: "✅ Link copied!",
     copyPrompt: "Copy this link and send it to your group:",
@@ -131,6 +137,11 @@ const translations = {
     compact: "Kompaktowa lista",
     completedLast: "Ukończone na dole",
     confirmDelete: "Pytaj przed usunięciem",
+    sortBy: "Sortuj",
+    sortOldest: "Najstarsze",
+    sortNewest: "Najnowsze",
+    sortAz: "A → Z",
+    sortZa: "Z → A",
     copyLink: "🔗 Kopiuj link zaproszenia",
     linkCopied: "✅ Link skopiowany!",
     copyPrompt: "Skopiuj ten link i wyślij go grupie:",
@@ -182,6 +193,11 @@ const translations = {
     compact: "Lista compacta",
     completedLast: "Completadas abajo",
     confirmDelete: "Preguntar antes de borrar",
+    sortBy: "Ordenar por",
+    sortOldest: "Más antiguas",
+    sortNewest: "Más nuevas",
+    sortAz: "A → Z",
+    sortZa: "Z → A",
     copyLink: "🔗 Copiar enlace de invitación",
     linkCopied: "✅ ¡Enlace copiado!",
     copyPrompt: "Copia este enlace y envíalo a tu grupo:",
@@ -233,6 +249,11 @@ const translations = {
     compact: "Kompakte Liste",
     completedLast: "Erledigte unten",
     confirmDelete: "Vor dem Löschen fragen",
+    sortBy: "Sortieren",
+    sortOldest: "Älteste zuerst",
+    sortNewest: "Neueste zuerst",
+    sortAz: "A → Z",
+    sortZa: "Z → A",
     copyLink: "🔗 Einladungslink kopieren",
     linkCopied: "✅ Link kopiert!",
     copyPrompt: "Kopiere diesen Link und schick ihn deiner Gruppe:",
@@ -284,6 +305,11 @@ const translations = {
     compact: "Liste compacte",
     completedLast: "Faites en bas",
     confirmDelete: "Demander avant de supprimer",
+    sortBy: "Trier par",
+    sortOldest: "Plus anciennes",
+    sortNewest: "Plus récentes",
+    sortAz: "A → Z",
+    sortZa: "Z → A",
     copyLink: "🔗 Copier le lien d'invitation",
     linkCopied: "✅ Lien copié !",
     copyPrompt: "Copie ce lien et envoie-le à ton groupe :",
@@ -335,6 +361,11 @@ const translations = {
     compact: "Lista compacta",
     completedLast: "Feitas em baixo",
     confirmDelete: "Perguntar antes de apagar",
+    sortBy: "Ordenar por",
+    sortOldest: "Mais antigas",
+    sortNewest: "Mais recentes",
+    sortAz: "A → Z",
+    sortZa: "Z → A",
     copyLink: "🔗 Copiar link de convite",
     linkCopied: "✅ Link copiado!",
     copyPrompt: "Copia este link e envia-o ao teu grupo:",
@@ -465,6 +496,7 @@ const newListBtn = document.getElementById("newListBtn");
 const myListsUl = document.getElementById("myLists");
 const progressFill = document.getElementById("progressFill");
 const progressText = document.getElementById("progressText");
+const sortSelect = document.getElementById("sortSelect");
 
 const menuBtn = document.getElementById("menuBtn");
 const settingsPanel = document.getElementById("settingsPanel");
@@ -670,6 +702,19 @@ function renderMyLists() {
   });
 }
 
+// ---------- SORTING ----------
+// Puts the tasks in the order chosen in the "Sort by" dropdown
+function sortTasks(list) {
+  const sorted = [...list];
+
+  if (settings.sort === "newest") sorted.sort((a, b) => b.createdAt - a.createdAt);
+  if (settings.sort === "az") sorted.sort((a, b) => a.text.localeCompare(b.text, settings.lang));
+  if (settings.sort === "za") sorted.sort((a, b) => b.text.localeCompare(a.text, settings.lang));
+  // "oldest" keeps the order from Firebase, which is already oldest first
+
+  return sorted;
+}
+
 // ---------- RENDER ----------
 function render() {
   taskList.innerHTML = "";
@@ -678,6 +723,9 @@ function render() {
   let visible = tasks;
   if (currentFilter === "active") visible = tasks.filter(task => !task.done);
   if (currentFilter === "completed") visible = tasks.filter(task => task.done);
+
+  // 1b. Sort the tasks
+  visible = sortTasks(visible);
 
   // 2. Optionally move completed tasks to the bottom
   if (settings.completedLast) {
@@ -764,6 +812,7 @@ function applySettings() {
   compactToggle.checked = settings.compact;
   completedLastToggle.checked = settings.completedLast;
   confirmToggle.checked = settings.confirmDelete;
+  sortSelect.value = settings.sort;
 }
 
 // Redraws everything in the current language
@@ -863,6 +912,12 @@ completedLastToggle.addEventListener("change", () => {
 confirmToggle.addEventListener("change", () => {
   settings.confirmDelete = confirmToggle.checked;
   saveSettings();
+});
+
+sortSelect.addEventListener("change", () => {
+  settings.sort = sortSelect.value;
+  saveSettings();
+  render();
 });
 
 // ---------- START ----------
