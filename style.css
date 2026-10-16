@@ -89,36 +89,58 @@ html { font-size: 16px; }
 html[data-size="small"] { font-size: 14px; }
 html[data-size="large"] { font-size: 19px; }
 
-/* ---------- PAGE LAYOUT (left sidebar | app | right sidebar) ---------- */
+/* ---------- PAGE LAYOUT (the app in the middle, sidebars slide in from the sides) ---------- */
 .layout {
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr) 260px;
-  grid-template-areas: "left main right";
   min-height: 100vh;
 }
 
-/* Both sidebars share the same look. They stay on screen while the page scrolls */
+.app {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 26px 20px 48px;
+}
+
+/* ---------- SLIDING SIDEBARS ---------- */
+/* Both sidebars wait just outside the screen. The class "open" slides them in */
 .sidebar,
 .sidebar-right {
-  position: sticky;
+  position: fixed;
   top: 0;
-  align-self: start;
-  height: 100vh;
+  bottom: 0;
+  width: min(280px, 84vw);
   padding: 26px 18px;
-  background: var(--panel);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--card);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   overflow-y: auto;
+  z-index: 20;
+  visibility: hidden; /* a hidden sidebar can not be clicked or tabbed into */
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.4s ease,
+              visibility 0s linear 0.4s;
 }
 
 .sidebar {
-  grid-area: left;
+  left: 0;
   border-right: 1px solid var(--border);
+  transform: translateX(-102%);
 }
 
 .sidebar-right {
-  grid-area: right;
+  right: 0;
   border-left: 1px solid var(--border);
+  transform: translateX(102%);
+}
+
+.sidebar.open,
+.sidebar-right.open {
+  transform: translateX(0);
+  visibility: visible;
+  box-shadow: 0 0 56px rgba(0, 0, 0, 0.25);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.4s ease,
+              visibility 0s linear 0s;
 }
 
 .sidebar-title {
@@ -134,13 +156,80 @@ html[data-size="large"] { font-size: 19px; }
   margin-bottom: 28px;
 }
 
-/* The app sits in the exact middle, between the two sidebars */
-.app {
-  grid-area: main;
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 26px 20px 48px;
+/* The thin strips at the screen edges. They show a glowing line and catch taps and swipes */
+.edge-zone {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  z-index: 15;
+  cursor: pointer;
+  touch-action: none; /* stops the phone from scrolling when you swipe from the strip */
+  transition: opacity 0.3s ease;
+}
+
+.edge-left  { left: 0; }
+.edge-right { right: 0; }
+
+.edge-zone::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 5px;
+  height: 72px;
+  border-radius: 999px;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  opacity: 0.5;
+  transition: opacity 0.25s ease, height 0.25s ease;
+}
+
+.edge-left::after  { left: 3px; }
+.edge-right::after { right: 3px; }
+
+.edge-zone:hover::after,
+.edge-zone:focus-visible::after {
+  opacity: 1;
+  height: 110px;
+}
+
+.edge-zone:focus-visible {
+  outline: none;
+}
+
+.edge-zone.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The invisible cover that closes the sidebar when you tap outside of it */
+.side-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 18;
+  background: transparent;
+  pointer-events: none;
+}
+
+.side-overlay.open {
+  pointer-events: auto;
+}
+
+/* On touch screens, the strips are wider and the page dims a little while a sidebar is open */
+@media (pointer: coarse) {
+  .edge-zone {
+    width: 22px;
+  }
+
+  .side-overlay {
+    background: rgba(10, 12, 25, 0.35);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .side-overlay.open {
+    opacity: 1;
+  }
 }
 
 /* ---------- BUTTONS (shared) ---------- */
@@ -798,11 +887,11 @@ footer button:hover {
 }
 
 #myLists li:hover {
-  background: var(--card);
+  background: var(--panel);
 }
 
 #myLists li.current {
-  background: var(--card);
+  background: var(--panel);
   border-color: var(--accent);
   box-shadow: var(--shadow);
 }
@@ -1165,90 +1254,10 @@ footer button:hover {
   }
 }
 
-/* ---------- MEDIUM SCREENS (small laptops): the tags move to a bar above the list ---------- */
-@media (max-width: 1100px) {
-  .layout {
-    grid-template-columns: 230px minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-      "left right"
-      "left main";
-  }
-
-  .sidebar-right {
-    position: static;
-    height: auto;
-    border-left: none;
-    border-bottom: 1px solid var(--border);
-    padding: 16px 20px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 14px 32px;
-  }
-
-  .side-section {
-    margin-bottom: 0;
-  }
-
-  .tag-filters {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .tag-chip {
-    width: auto;
-    padding: 7px 14px;
-    border-radius: 999px;
-    text-align: center;
-  }
-}
-
-/* ---------- PHONE LAYOUT (everything stacks in one column) ---------- */
+/* ---------- PHONE LAYOUT ---------- */
 @media (max-width: 700px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto 1fr;
-    grid-template-areas:
-      "left"
-      "right"
-      "main";
-  }
-
-  .sidebar {
-    position: static;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    padding: 16px;
-  }
-
-  .sidebar .sidebar-title,
-  .sidebar-right .sidebar-title {
-    margin: 0 0 8px;
-  }
-
-  #myLists {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-
-  #myLists li {
-    flex-shrink: 0;
-    margin-bottom: 0;
-  }
-
-  .sidebar-right {
-    padding: 14px 16px;
-    justify-content: flex-start;
-  }
-
   .app {
-    padding: 20px 16px 40px;
+    padding: 20px 20px 40px;
   }
 
   .add-row .tag-select {
@@ -1274,6 +1283,12 @@ footer button:hover {
   .progress-fill.shine,
   .progress-fill.shine::after {
     animation: none !important;
+  }
+
+  .sidebar,
+  .sidebar-right,
+  .edge-zone::after {
+    transition: none !important;
   }
 
   #taskList li:hover,

@@ -10,11 +10,6 @@
   <div class="layout">
     <!-- DIV = an invisible box that holds other things -->
 
-    <aside class="sidebar">
-      <h2 class="sidebar-title" data-i18n="myLists">📋 My lists</h2>
-      <ul id="myLists"></ul>
-    </aside>
-
     <main class="app">
 
       <header>
@@ -77,29 +72,42 @@
 
     </main>
 
-    <aside class="sidebar-right">
-      <!-- RIGHT SIDEBAR = a box on the right side of the page. It holds the tag filters and the sort menu -->
-
-      <div class="side-section">
-        <h2 class="sidebar-title" data-i18n="tagLabel">Tag</h2>
-        <div class="tag-filters" id="tagFilters"></div>
-        <!-- TAG FILTERS = an empty box. The JavaScript fills it with little buttons, one for each tag -->
-      </div>
-
-      <div class="side-section">
-        <h2 class="sidebar-title" data-i18n="sortBy">Sort by</h2>
-        <select id="sortSelect" data-i18n-aria="sortBy" aria-label="Sort by">
-          <option value="oldest" data-i18n="sortOldest">Oldest first</option>
-          <option value="newest" data-i18n="sortNewest">Newest first</option>
-          <option value="az" data-i18n="sortAz">A → Z</option>
-          <option value="za" data-i18n="sortZa">Z → A</option>
-          <option value="manual" data-i18n="sortManual">My order (drag)</option>
-          <!-- MANUAL = the order you made by dragging the ⋮⋮ handle on the tasks -->
-        </select>
-      </div>
-    </aside>
-
   </div>
+
+  <aside class="sidebar" id="sidebarLeft">
+    <!-- LEFT SIDEBAR = a box that hides on the left side of the screen and slides out when you move to the left edge -->
+    <h2 class="sidebar-title" data-i18n="myLists">📋 My lists</h2>
+    <ul id="myLists"></ul>
+  </aside>
+
+  <aside class="sidebar-right" id="sidebarRight">
+    <!-- RIGHT SIDEBAR = a box that hides on the right side of the screen. It holds the tag filters and the sort menu -->
+
+    <div class="side-section">
+      <h2 class="sidebar-title" data-i18n="tagLabel">Tag</h2>
+      <div class="tag-filters" id="tagFilters"></div>
+      <!-- TAG FILTERS = an empty box. The JavaScript fills it with little buttons, one for each tag -->
+    </div>
+
+    <div class="side-section">
+      <h2 class="sidebar-title" data-i18n="sortBy">Sort by</h2>
+      <select id="sortSelect" data-i18n-aria="sortBy" aria-label="Sort by">
+        <option value="oldest" data-i18n="sortOldest">Oldest first</option>
+        <option value="newest" data-i18n="sortNewest">Newest first</option>
+        <option value="az" data-i18n="sortAz">A → Z</option>
+        <option value="za" data-i18n="sortZa">Z → A</option>
+        <option value="manual" data-i18n="sortManual">My order (drag)</option>
+        <!-- MANUAL = the order you made by dragging the ⋮⋮ handle on the tasks -->
+      </select>
+    </div>
+  </aside>
+
+  <div class="edge-zone edge-left" id="edgeLeft" role="button" tabindex="0" data-i18n-aria="myLists" aria-label="My lists"></div>
+  <div class="edge-zone edge-right" id="edgeRight" role="button" tabindex="0" data-i18n-aria="tagLabel" aria-label="Tag"></div>
+  <!-- EDGE ZONE = a thin strip at the edge of the screen. It shows a little glowing line, and moving the mouse there (or swiping from there) opens the sidebar -->
+
+  <div class="side-overlay" id="sideOverlay"></div>
+  <!-- SIDE OVERLAY = an invisible cover over the page while a sidebar is open. Tapping it closes the sidebar -->
 
   <!-- SETTINGS PANEL -->
   <div class="settings-overlay" id="settingsOverlay"></div>

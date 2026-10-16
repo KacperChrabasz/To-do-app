@@ -1386,3 +1386,138 @@ sortSelect.addEventListener("change", () => {
 applySettings();
 renderTagFilters();
 renderMyLists();
+
+// ---------- SLIDING SIDEBARS ----------
+// The two sidebars hide at the edges of the screen. Moving the mouse to an edge (or swiping from it) slides one out.
+const sidebarLeft = document.getElementById("sidebarLeft");
+const sidebarRight = document.getElementById("sidebarRight");
+const edgeLeft = document.getElementById("edgeLeft");
+const edgeRight = document.getElementById("edgeRight");
+const sideOverlay = document.getElementById("sideOverlay");
+
+const sides = {
+  left:  { panel: sidebarLeft,  edge: edgeLeft },
+  right: { panel: sidebarRight, edge: edgeRight }
+};
+
+const EDGE_TRIGGER = 8;      // how close to the screen edge (in pixels) the mouse must be to open a sidebar
+const KEEP_OPEN_EXTRA = 40;  // how far past the sidebar the mouse can go before it hides again
+
+function isSideOpen(name) {
+  return sides[name].panel.classList.contains("open");
+}
+
+function closeSides() {
+  Object.values(sides).forEach(side => {
+    side.panel.classList.remove("open");
+    side.edge.classList.remove("hidden");
+  });
+  sideOverlay.classList.remove("open");
+}
+
+function openSide(name) {
+  if (isSideOpen(name)) return;
+  if (settingsPanel.classList.contains("open")) return; // the settings menu is open, leave it alone
+
+  closeSides();
+  sides[name].panel.classList.add("open");
+  sides[name].edge.classList.add("hidden");
+  sideOverlay.classList.add("open");
+}
+
+// MOUSE: open when the mouse touches the edge, close when it moves away from the sidebar
+document.addEventListener("pointermove", event => {
+  if (event.pointerType !== "mouse") return;
+  if (event.buttons) return; // a mouse button is held (selecting text or dragging a task)
+  if (dragState) return;
+  if (settingsPanel.classList.contains("open")) return;
+
+  const x = event.clientX;
+  const width = document.documentElement.clientWidth;
+
+  if (isSideOpen("left")) {
+    if (x > sidebarLeft.offsetWidth + KEEP_OPEN_EXTRA) closeSides();
+    return;
+  }
+
+  if (isSideOpen("right")) {
+    if (x < width - sidebarRight.offsetWidth - KEEP_OPEN_EXTRA) closeSides();
+    return;
+  }
+
+  if (x <= EDGE_TRIGGER) openSide("left");
+  else if (x >= width - EDGE_TRIGGER) openSide("right");
+});
+
+// TOUCH (and clicks): a tap or a swipe on the glowing edge strip opens the sidebar
+// direction: 1 means "swipe to the right opens it" (left sidebar), -1 means "swipe to the left opens it" (right sidebar)
+function setupEdge(name, edge, direction) {
+  let startX = null;
+
+  edge.addEventListener("pointerdown", event => {
+    startX = event.clientX;
+  });
+
+  edge.addEventListener("pointermove", event => {
+    if (startX === null) return;
+    if ((event.clientX - startX) * direction > 24) {
+      startX = null;
+      openSide(name);
+    }
+  });
+
+  edge.addEventListener("pointerup", () => {
+    if (startX !== null) {
+      startX = null;
+      openSide(name); // it was a tap
+    }
+  });
+
+  edge.addEventListener("pointercancel", () => {
+    startX = null;
+  });
+
+  // Keyboard: Enter or Space on the strip opens it
+  edge.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openSide(name);
+    }
+  });
+}
+
+setupEdge("left", edgeLeft, 1);
+setupEdge("right", edgeRight, -1);
+
+// TOUCH: swipe a sidebar back toward its edge to close it
+// direction: -1 means "swipe to the left closes it" (left sidebar), 1 means "swipe to the right closes it"
+function enableSwipeClose(panel, direction) {
+  let startX = 0;
+  let startY = 0;
+
+  panel.addEventListener("touchstart", event => {
+    startX = event.touches[0].clientX;
+    startY = event.touches[0].clientY;
+  }, { passive: true });
+
+  panel.addEventListener("touchend", event => {
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && Math.sign(dx) === direction) {
+      closeSides();
+    }
+  }, { passive: true });
+}
+
+enableSwipeClose(sidebarLeft, -1);
+enableSwipeClose(sidebarRight, 1);
+
+// Tapping outside, pressing Esc, or opening the settings menu all hide the sidebars
+sideOverlay.addEventListener("click", closeSides);
+menuBtn.addEventListener("click", closeSides);
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeSides();
+});
