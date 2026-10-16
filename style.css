@@ -476,6 +476,7 @@ h1 {
 
 #taskList li {
   display: flex;
+  flex-wrap: wrap; /* lets the comment box drop to its own line under the task */
   align-items: center;
   gap: 12px;
   background: var(--card);
@@ -508,6 +509,7 @@ h1 {
 
 #taskList li .text {
   flex: 1;
+  min-width: 0;
   font-size: 0.98rem;
   font-weight: 500;
   word-break: break-word;
@@ -519,8 +521,8 @@ h1 {
   color: var(--muted);
 }
 
-/* ✏️ and 🗑️ buttons on each task */
-#taskList li button {
+/* 💬 ✏️ 🗑️ buttons on each task (only the direct children of the task) */
+#taskList li > button {
   background: none;
   border: none;
   font-size: 1rem;
@@ -531,16 +533,31 @@ h1 {
   opacity: 0.6;
 }
 
-#taskList li:hover button {
+#taskList li:hover > button {
   opacity: 1;
 }
 
-#taskList li button:hover {
+#taskList li > button:hover {
   background: var(--border);
 }
 
-#taskList li button:last-child:hover {
+#taskList li > .delete-btn:hover {
   background: rgba(229, 72, 77, 0.14);
+}
+
+/* the 💬 button grows a little when it shows a number */
+#taskList li > .comment-btn {
+  width: auto;
+  min-width: 34px;
+  padding: 0 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+#taskList li > .comment-btn.has-comments {
+  opacity: 1;
+  color: var(--accent);
 }
 
 .empty {
@@ -548,6 +565,118 @@ h1 {
   color: var(--muted);
   padding: 36px 16px;
   font-size: 0.95rem;
+}
+
+/* ---------- COMMENTS (the box that opens under a task) ---------- */
+.comments {
+  flex-basis: 100%;
+  width: 100%;
+  margin-top: 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.comment-item {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(91, 108, 255, 0.07);
+  border: 1px solid var(--border);
+}
+
+.comment-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+  font-size: 0.78rem;
+}
+
+.comment-author {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.comment-time {
+  flex: 1;
+  color: var(--muted);
+}
+
+.comment-del {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.comment-del:hover {
+  background: rgba(229, 72, 77, 0.14);
+  color: var(--danger);
+}
+
+.comment-text {
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.comment-empty {
+  padding: 6px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.comment-form {
+  display: flex;
+  gap: 8px;
+}
+
+.comment-form input {
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.comment-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(91, 108, 255, 0.18);
+}
+
+.comment-name {
+  width: 96px;
+  flex-shrink: 0;
+}
+
+.comment-input {
+  flex: 1;
+}
+
+.comment-send {
+  flex-shrink: 0;
+  padding: 0 16px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 /* ---------- TAG CHIPS ON TASKS ---------- */
@@ -671,9 +800,13 @@ footer button:hover {
   border-radius: 12px;
 }
 
-:root[data-density="compact"] #taskList li button {
+:root[data-density="compact"] #taskList li > button {
   width: 30px;
   height: 30px;
+}
+
+:root[data-density="compact"] #taskList li > .comment-btn {
+  width: auto;
 }
 
 :root[data-density="compact"] .add-row input {
@@ -1066,6 +1199,15 @@ footer button:hover {
 
   .add-row .tag-select {
     width: 96px;
+  }
+
+  /* 16px stops the iPhone from zooming in when you tap a comment field */
+  .comment-form input {
+    font-size: 16px;
+  }
+
+  .comment-name {
+    width: 78px;
   }
 }
 

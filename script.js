@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, collection, addDoc, deleteDoc, updateDoc,
-  doc, onSnapshot, query, orderBy
+  doc, onSnapshot, query, orderBy, arrayUnion, arrayRemove
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ---------- FIREBASE SETUP ----------
@@ -19,6 +19,7 @@ const db = getFirestore(app);
 
 // ---------- SETTINGS (saved in this browser) ----------
 const SETTINGS_KEY = "todo-settings";
+const AUTHOR_KEY = "todo-author"; // the name used on comments, saved in this browser
 
 // Accent colors: [main color, second color for gradients]
 const PALETTES = {
@@ -97,6 +98,14 @@ const translations = {
     tag_home: "Home",
     tag_personal: "Personal",
     tag_shopping: "Shopping",
+    comments: "Comments",
+    commentPlaceholder: "Write a comment...",
+    yourName: "Your name",
+    send: "Send",
+    noComments: "No comments yet.",
+    anonymous: "Anonymous",
+    deleteComment: "Delete comment",
+    confirmDeleteComment: "Delete this comment?",
     copyLink: "🔗 Copy invite link",
     linkCopied: "✅ Link copied!",
     copyPrompt: "Copy this link and send it to your group:",
@@ -161,6 +170,14 @@ const translations = {
     tag_home: "Dom",
     tag_personal: "Osobiste",
     tag_shopping: "Zakupy",
+    comments: "Komentarze",
+    commentPlaceholder: "Napisz komentarz...",
+    yourName: "Twoje imię",
+    send: "Wyślij",
+    noComments: "Brak komentarzy.",
+    anonymous: "Anonim",
+    deleteComment: "Usuń komentarz",
+    confirmDeleteComment: "Usunąć ten komentarz?",
     copyLink: "🔗 Kopiuj link zaproszenia",
     linkCopied: "✅ Link skopiowany!",
     copyPrompt: "Skopiuj ten link i wyślij go grupie:",
@@ -225,6 +242,14 @@ const translations = {
     tag_home: "Casa",
     tag_personal: "Personal",
     tag_shopping: "Compras",
+    comments: "Comentarios",
+    commentPlaceholder: "Escribe un comentario...",
+    yourName: "Tu nombre",
+    send: "Enviar",
+    noComments: "Aún no hay comentarios.",
+    anonymous: "Anónimo",
+    deleteComment: "Borrar comentario",
+    confirmDeleteComment: "¿Borrar este comentario?",
     copyLink: "🔗 Copiar enlace de invitación",
     linkCopied: "✅ ¡Enlace copiado!",
     copyPrompt: "Copia este enlace y envíalo a tu grupo:",
@@ -289,6 +314,14 @@ const translations = {
     tag_home: "Zuhause",
     tag_personal: "Privat",
     tag_shopping: "Einkaufen",
+    comments: "Kommentare",
+    commentPlaceholder: "Kommentar schreiben...",
+    yourName: "Dein Name",
+    send: "Senden",
+    noComments: "Noch keine Kommentare.",
+    anonymous: "Anonym",
+    deleteComment: "Kommentar löschen",
+    confirmDeleteComment: "Diesen Kommentar löschen?",
     copyLink: "🔗 Einladungslink kopieren",
     linkCopied: "✅ Link kopiert!",
     copyPrompt: "Kopiere diesen Link und schick ihn deiner Gruppe:",
@@ -353,6 +386,14 @@ const translations = {
     tag_home: "Maison",
     tag_personal: "Perso",
     tag_shopping: "Courses",
+    comments: "Commentaires",
+    commentPlaceholder: "Écris un commentaire...",
+    yourName: "Ton nom",
+    send: "Envoyer",
+    noComments: "Pas encore de commentaires.",
+    anonymous: "Anonyme",
+    deleteComment: "Supprimer le commentaire",
+    confirmDeleteComment: "Supprimer ce commentaire ?",
     copyLink: "🔗 Copier le lien d'invitation",
     linkCopied: "✅ Lien copié !",
     copyPrompt: "Copie ce lien et envoie-le à ton groupe :",
@@ -417,6 +458,14 @@ const translations = {
     tag_home: "Casa",
     tag_personal: "Pessoal",
     tag_shopping: "Compras",
+    comments: "Comentários",
+    commentPlaceholder: "Escreve um comentário...",
+    yourName: "O teu nome",
+    send: "Enviar",
+    noComments: "Ainda não há comentários.",
+    anonymous: "Anónimo",
+    deleteComment: "Apagar comentário",
+    confirmDeleteComment: "Apagar este comentário?",
     copyLink: "🔗 Copiar link de convite",
     linkCopied: "✅ Link copiado!",
     copyPrompt: "Copia este link e envia-o ao teu grupo:",
@@ -567,6 +616,8 @@ let tasks = [];
 let currentFilter = "all";
 let currentTag = "all"; // which tag chip is selected: "all" or one of TAGS
 let lastPercent = null; // remembers the last progress, so milestones fire only when crossed
+let openComments = new Set(); // ids of the tasks whose comment box is open
+let commentDrafts = {};       // text typed in a comment box but not sent yet (task id -> text)
 
 // ---------- ACTIONS (these write to Firebase) ----------
 async function addTask() {
@@ -613,6 +664,148 @@ async function editTask(task) {
 async function clearCompleted() {
   const completed = tasks.filter(task => task.done);
   await Promise.all(completed.map(task => deleteDoc(taskDoc(task.id))));
+}
+
+// ---------- COMMENTS ----------
+// Comments are saved inside the task, in a list called "comments"
+async function addComment(task, text, author) {
+  const cleanText = text.trim();
+  if (cleanText === "") return;
+
+  const cleanAuthor = author.trim();
+  localStorage.setItem(AUTHOR_KEY, cleanAuthor);
+
+  await updateDoc(taskDoc(task.id), {
+    comments: arrayUnion({
+      id: Date.now() + "-" + Math.random().toString(36).substring(2, 7),
+      text: cleanText,
+      author: cleanAuthor || t("anonymous"),
+      createdAt: Date.now()
+    })
+  });
+}
+
+async function deleteComment(task, comment) {
+  if (settings.confirmDelete && !confirm(t("confirmDeleteComment"))) return;
+  await updateDoc(taskDoc(task.id), { comments: arrayRemove(comment) });
+}
+
+// Opens or closes the comment box under a task
+function toggleComments(taskId) {
+  const opening = !openComments.has(taskId);
+
+  if (opening) openComments.add(taskId);
+  else openComments.delete(taskId);
+
+  render();
+
+  // When opening, put the cursor in the comment field
+  if (opening) {
+    const field = taskList.querySelector(`[data-focus-key="text-${taskId}"]`);
+    if (field) field.focus();
+  }
+}
+
+// Builds the box with the comments and the form under a task
+function buildCommentsPanel(task) {
+  const panel = document.createElement("div");
+  panel.className = "comments";
+
+  // The comments, oldest first
+  const list = document.createElement("div");
+  list.className = "comment-list";
+
+  const comments = [...(task.comments || [])].sort((a, b) => a.createdAt - b.createdAt);
+
+  if (comments.length === 0) {
+    const none = document.createElement("div");
+    none.className = "comment-empty";
+    none.textContent = t("noComments");
+    list.appendChild(none);
+  }
+
+  comments.forEach(comment => {
+    const item = document.createElement("div");
+    item.className = "comment-item";
+
+    const head = document.createElement("div");
+    head.className = "comment-head";
+
+    const author = document.createElement("span");
+    author.className = "comment-author";
+    author.textContent = comment.author;
+
+    const time = document.createElement("span");
+    time.className = "comment-time";
+    time.textContent = new Date(comment.createdAt).toLocaleString(settings.lang, {
+      dateStyle: "short",
+      timeStyle: "short"
+    });
+
+    const del = document.createElement("button");
+    del.className = "comment-del";
+    del.textContent = "✖";
+    del.setAttribute("aria-label", t("deleteComment"));
+    del.title = t("deleteComment");
+    del.addEventListener("click", () => deleteComment(task, comment));
+
+    head.append(author, time, del);
+
+    const body = document.createElement("div");
+    body.className = "comment-text";
+    body.textContent = comment.text; // textContent is safe: no HTML can sneak in
+
+    item.append(head, body);
+    list.appendChild(item);
+  });
+
+  // The form: name + comment + send button
+  const form = document.createElement("div");
+  form.className = "comment-form";
+
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.className = "comment-name";
+  nameInput.placeholder = t("yourName");
+  nameInput.maxLength = 20;
+  nameInput.autocomplete = "off";
+  nameInput.value = localStorage.getItem(AUTHOR_KEY) || "";
+  nameInput.dataset.focusKey = "name-" + task.id;
+  nameInput.addEventListener("input", () => {
+    localStorage.setItem(AUTHOR_KEY, nameInput.value);
+  });
+
+  const textInput = document.createElement("input");
+  textInput.type = "text";
+  textInput.className = "comment-input";
+  textInput.placeholder = t("commentPlaceholder");
+  textInput.maxLength = 300;
+  textInput.autocomplete = "off";
+  textInput.value = commentDrafts[task.id] || "";
+  textInput.dataset.focusKey = "text-" + task.id;
+  textInput.addEventListener("input", () => {
+    commentDrafts[task.id] = textInput.value;
+  });
+
+  const send = () => {
+    const text = textInput.value;
+    textInput.value = "";
+    commentDrafts[task.id] = "";
+    addComment(task, text, nameInput.value);
+  };
+
+  textInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") send();
+  });
+
+  const sendBtn = document.createElement("button");
+  sendBtn.className = "comment-send";
+  sendBtn.textContent = t("send");
+  sendBtn.addEventListener("click", send);
+
+  form.append(nameInput, textInput, sendBtn);
+  panel.append(list, form);
+  return panel;
 }
 
 // ---------- ANIMATIONS ----------
@@ -758,7 +951,7 @@ function renderMyLists() {
 }
 
 // ---------- TAG FILTER BUTTONS ----------
-// Builds the little buttons under the filters: "All tags", then one for each tag
+// Builds the little buttons in the right sidebar: "All tags", then one for each tag
 function renderTagFilters() {
   tagFiltersBox.innerHTML = "";
 
@@ -792,6 +985,13 @@ function sortTasks(list) {
 
 // ---------- RENDER ----------
 function render() {
+  // Remember which field the person is typing in, so a live update does not take it away
+  const active = document.activeElement;
+  let restore = null;
+  if (active && active.dataset && active.dataset.focusKey) {
+    restore = { key: active.dataset.focusKey, pos: active.selectionStart };
+  }
+
   taskList.innerHTML = "";
 
   // 1. Filter by All / Active / Done
@@ -843,19 +1043,46 @@ function render() {
       li.appendChild(chip);
     }
 
+    // The 💬 button shows how many comments the task has
+    const count = (task.comments || []).length;
+    const commentBtn = document.createElement("button");
+    commentBtn.className = "comment-btn" + (count > 0 ? " has-comments" : "");
+    commentBtn.textContent = count > 0 ? "💬 " + count : "💬";
+    commentBtn.setAttribute("aria-label", t("comments"));
+    commentBtn.title = t("comments");
+    commentBtn.addEventListener("click", () => toggleComments(task.id));
+
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️";
     editBtn.setAttribute("aria-label", t("editTask"));
     editBtn.addEventListener("click", () => editTask(task));
 
     const delBtn = document.createElement("button");
+    delBtn.className = "delete-btn";
     delBtn.textContent = "🗑️";
     delBtn.setAttribute("aria-label", t("deleteTask"));
     delBtn.addEventListener("click", () => requestDelete(task.id));
 
-    li.append(editBtn, delBtn);
+    li.append(commentBtn, editBtn, delBtn);
+
+    // The comment box, only if it is open for this task
+    if (openComments.has(task.id)) {
+      li.appendChild(buildCommentsPanel(task));
+    }
+
     taskList.appendChild(li);
   });
+
+  // Put the cursor back where the person was typing
+  if (restore) {
+    const field = taskList.querySelector(`[data-focus-key="${restore.key}"]`);
+    if (field) {
+      field.focus();
+      try {
+        field.setSelectionRange(restore.pos, restore.pos);
+      } catch (e) {}
+    }
+  }
 
   // Counter, footer, and progress bar
   const left = tasks.filter(task => !task.done).length;
