@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, collection, addDoc, deleteDoc, updateDoc,
-  doc, onSnapshot, query, orderBy, arrayUnion, arrayRemove
+  doc, onSnapshot, query, orderBy, arrayUnion, arrayRemove, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ---------- FIREBASE SETUP ----------
@@ -90,6 +90,8 @@ const translations = {
     sortNewest: "Newest first",
     sortAz: "A → Z",
     sortZa: "Z → A",
+    sortManual: "My order (drag)",
+    dragHandle: "Drag to reorder",
     tagLabel: "Tag",
     tagNone: "No tag",
     tagAll: "All tags",
@@ -162,6 +164,8 @@ const translations = {
     sortNewest: "Najnowsze",
     sortAz: "A → Z",
     sortZa: "Z → A",
+    sortManual: "Moja kolejność (przeciągnij)",
+    dragHandle: "Przeciągnij, aby zmienić kolejność",
     tagLabel: "Etykieta",
     tagNone: "Bez etykiety",
     tagAll: "Wszystkie",
@@ -234,6 +238,8 @@ const translations = {
     sortNewest: "Más nuevas",
     sortAz: "A → Z",
     sortZa: "Z → A",
+    sortManual: "Mi orden (arrastrar)",
+    dragHandle: "Arrastra para reordenar",
     tagLabel: "Etiqueta",
     tagNone: "Sin etiqueta",
     tagAll: "Todas",
@@ -306,6 +312,8 @@ const translations = {
     sortNewest: "Neueste zuerst",
     sortAz: "A → Z",
     sortZa: "Z → A",
+    sortManual: "Eigene Reihenfolge (ziehen)",
+    dragHandle: "Ziehen zum Umsortieren",
     tagLabel: "Kategorie",
     tagNone: "Keine Kategorie",
     tagAll: "Alle",
@@ -378,6 +386,8 @@ const translations = {
     sortNewest: "Plus récentes",
     sortAz: "A → Z",
     sortZa: "Z → A",
+    sortManual: "Mon ordre (glisser)",
+    dragHandle: "Glisser pour réorganiser",
     tagLabel: "Étiquette",
     tagNone: "Sans étiquette",
     tagAll: "Toutes",
@@ -450,6 +460,8 @@ const translations = {
     sortNewest: "Mais recentes",
     sortAz: "A → Z",
     sortZa: "Z → A",
+    sortManual: "A minha ordem (arrastar)",
+    dragHandle: "Arrasta para reordenar",
     tagLabel: "Etiqueta",
     tagNone: "Sem etiqueta",
     tagAll: "Todas",
@@ -618,6 +630,8 @@ let currentTag = "all"; // which tag chip is selected: "all" or one of TAGS
 let lastPercent = null; // remembers the last progress, so milestones fire only when crossed
 let openComments = new Set(); // ids of the tasks whose comment box is open
 let commentDrafts = {};       // text typed in a comment box but not sent yet (task id -> text)
+let dragState = null;         // information about the task being dragged right now (null = nothing is dragged)
+let renderPending = false;    // true if the list changed online while a task was being dragged
 
 // ---------- ACTIONS (these write to Firebase) ----------
 async function addTask() {
@@ -631,12 +645,18 @@ async function addTask() {
   taskInput.value = "";
   taskInput.focus();
 
-  await addDoc(tasksRef, {
+  const newTask = {
     text: text,
     done: false,
     tag: tagSelect.value, // "" means no tag
     createdAt: Date.now()
-  });
+  };
+
+  // If the tasks were already put in a custom order, the new task goes to the end of it
+  const orders = tasks.filter(task => typeof task.order === "number").map(task => task.order);
+  if (orders.length > 0) newTask.order = Math.max(...orders) + 1;
+
+  await addDoc(tasksRef, newTask);
 }
 
 async function toggleTask(task) {
@@ -806,6 +826,101 @@ function buildCommentsPanel(task) {
   form.append(nameInput, textInput, sendBtn);
   panel.append(list, form);
   return panel;
+}
+
+// ---------- DRAG AND DROP ----------
+// Saves a new order: every task gets a number (0, 1, 2...) that says where it stands in the list
+async function saveOrder(ids) {
+  // 1. Update the screen right away, so the task does not jump back
+  ids.forEach((id, index) => {
+    const task = tasks.find(item => item.id === id);
+    if (task) task.order = index;
+  });
+
+  // 2. Switch the "Sort by" menu to "My order (drag)"
+  settings.sort = "manual";
+  saveSettings();
+  sortSelect.value = "manual";
+  render();
+
+  // 3. Save all the numbers online in one go, so everyone in the group gets the same order
+  const batch = writeBatch(db);
+  ids.forEach((id, index) => {
+    batch.update(taskDoc(id), { order: index });
+  });
+  await batch.commit();
+}
+
+// Starts dragging when the ⋮⋮ handle is pressed (works with a mouse and with a finger)
+function startDrag(event, li, task, handle) {
+  if (event.pointerType === "mouse" && event.button !== 0) return; // only the left mouse button
+  event.preventDefault();
+  handle.setPointerCapture(event.pointerId); // keeps sending events to the handle, even outside it
+
+  dragState = { id: task.id, li: li, startY: event.clientY, index: null, otherIds: null };
+  li.classList.add("dragging");
+
+  const onMove = moveEvent => {
+    // The task follows the finger or the mouse
+    li.style.transform = `translateY(${moveEvent.clientY - dragState.startY}px)`;
+    updateDropTarget(moveEvent.clientY);
+  };
+
+  const onEnd = endEvent => {
+    handle.removeEventListener("pointermove", onMove);
+    handle.removeEventListener("pointerup", onEnd);
+    handle.removeEventListener("pointercancel", onEnd);
+    finishDrag(endEvent.type === "pointerup");
+  };
+
+  handle.addEventListener("pointermove", onMove);
+  handle.addEventListener("pointerup", onEnd);
+  handle.addEventListener("pointercancel", onEnd);
+}
+
+// Works out where the dragged task would land, and draws a line at that spot
+function updateDropTarget(pointerY) {
+  const others = [...taskList.querySelectorAll("li[data-task-id]")]
+    .filter(el => el !== dragState.li);
+
+  others.forEach(el => el.classList.remove("drop-before", "drop-after"));
+
+  // Count how many tasks are above the finger: that is the new position
+  let index = 0;
+  others.forEach(el => {
+    const box = el.getBoundingClientRect();
+    if (pointerY > box.top + box.height / 2) index++;
+  });
+
+  if (others.length > 0) {
+    if (index < others.length) others[index].classList.add("drop-before");
+    else others[others.length - 1].classList.add("drop-after");
+  }
+
+  dragState.index = index;
+  dragState.otherIds = others.map(el => el.dataset.taskId);
+}
+
+// Called when the finger or the mouse is released
+function finishDrag(commit) {
+  const state = dragState;
+
+  state.li.classList.remove("dragging");
+  state.li.style.transform = "";
+  taskList.querySelectorAll(".drop-before, .drop-after").forEach(el => {
+    el.classList.remove("drop-before", "drop-after");
+  });
+
+  dragState = null;
+
+  // Put the dragged task into the list of the other tasks, at its new position
+  if (commit && state.otherIds) {
+    const ids = [...state.otherIds];
+    ids.splice(state.index, 0, state.id);
+    saveOrder(ids);
+  } else if (renderPending) {
+    render();
+  }
 }
 
 // ---------- ANIMATIONS ----------
@@ -978,6 +1093,15 @@ function sortTasks(list) {
   if (settings.sort === "newest") sorted.sort((a, b) => b.createdAt - a.createdAt);
   if (settings.sort === "az") sorted.sort((a, b) => a.text.localeCompare(b.text, settings.lang));
   if (settings.sort === "za") sorted.sort((a, b) => b.text.localeCompare(a.text, settings.lang));
+
+  // "My order": use the numbers saved by drag and drop. Tasks without a number go to the end
+  if (settings.sort === "manual") {
+    sorted.sort((a, b) => {
+      const orderA = a.order ?? Number.MAX_SAFE_INTEGER;
+      const orderB = b.order ?? Number.MAX_SAFE_INTEGER;
+      return orderA !== orderB ? orderA - orderB : a.createdAt - b.createdAt;
+    });
+  }
   // "oldest" keeps the order from Firebase, which is already oldest first
 
   return sorted;
@@ -985,6 +1109,13 @@ function sortTasks(list) {
 
 // ---------- RENDER ----------
 function render() {
+  // While a task is being dragged, do not redraw the list. It would break the drag.
+  if (dragState) {
+    renderPending = true;
+    return;
+  }
+  renderPending = false;
+
   // Remember which field the person is typing in, so a live update does not take it away
   const active = document.activeElement;
   let restore = null;
@@ -1013,6 +1144,9 @@ function render() {
     ];
   }
 
+  // Dragging only works when the whole list is on screen (no filter is on)
+  const dragEnabled = currentFilter === "all" && currentTag === "all";
+
   if (visible.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty";
@@ -1022,7 +1156,19 @@ function render() {
 
   visible.forEach(task => {
     const li = document.createElement("li");
+    li.dataset.taskId = task.id;
     if (task.done) li.classList.add("done");
+
+    // The ⋮⋮ handle you grab to drag the task
+    if (dragEnabled) {
+      const handle = document.createElement("span");
+      handle.className = "drag-handle";
+      handle.textContent = "⋮⋮";
+      handle.title = t("dragHandle");
+      handle.setAttribute("aria-label", t("dragHandle"));
+      handle.addEventListener("pointerdown", event => startDrag(event, li, task, handle));
+      li.appendChild(handle);
+    }
 
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";

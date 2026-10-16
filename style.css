@@ -567,6 +567,60 @@ h1 {
   font-size: 0.95rem;
 }
 
+/* ---------- DRAG AND DROP ---------- */
+/* the ⋮⋮ handle you grab */
+.drag-handle {
+  flex-shrink: 0;
+  width: 18px;
+  margin-right: -4px;
+  color: var(--muted);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -5px;
+  text-align: center;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none; /* stops the phone from scrolling when you drag the handle */
+  opacity: 0.55;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+#taskList li:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:hover {
+  color: var(--accent);
+}
+
+/* the task you are holding */
+#taskList li.dragging {
+  position: relative;
+  z-index: 30;
+  transition: none;
+  cursor: grabbing;
+  border-color: var(--accent);
+  box-shadow: 0 18px 40px rgba(20, 25, 50, 0.28);
+  opacity: 0.96;
+}
+
+#taskList li.dragging .drag-handle {
+  cursor: grabbing;
+  color: var(--accent);
+  opacity: 1;
+}
+
+/* the colored line that shows where the task will land */
+#taskList li.drop-before {
+  box-shadow: 0 -5px 0 0 var(--accent);
+}
+
+#taskList li.drop-after {
+  box-shadow: 0 5px 0 0 var(--accent);
+}
+
 /* ---------- COMMENTS (the box that opens under a task) ---------- */
 .comments {
   flex-basis: 100%;
