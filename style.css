@@ -1297,3 +1297,140 @@ footer button:hover {
     transform: none;
   }
 }
+/* ---------- BOARD VIEW (Jira-style columns) ---------- */
+body.board-mode .app { max-width: 1180px; }
+body:not(.board-mode) #board { display: none; }
+body.board-mode #taskList,
+body.board-mode .filters:not(.view-switch) { display: none; }
+
+.view-switch { max-width: 240px; }
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(240px, 1fr));
+  gap: 14px;
+  align-items: start;
+  overflow-x: auto;
+  padding-bottom: 12px;
+}
+
+.board-col {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 10px;
+  min-height: 140px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.board-col.drag-over {
+  border-color: var(--accent);
+  background: rgba(91, 108, 255, 0.1);
+}
+
+.col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.col-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.col-progress .col-dot { background: var(--accent); }
+.col-review   .col-dot { background: #ff8a3d; }
+.col-done     .col-dot { background: #20b47a; }
+
+.col-count {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  font-size: 0.72rem;
+}
+
+.col-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 60px;
+}
+
+.col-empty {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 14px 0;
+}
+
+.board-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: var(--shadow);
+  cursor: grab;
+  transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.3s ease;
+}
+
+.board-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+  border-color: rgba(91, 108, 255, 0.35);
+}
+
+.board-card.dragging { opacity: 0.4; }
+
+.board-card.is-done .card-text {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.card-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  word-break: break-word;
+  margin-bottom: 8px;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 10px;
+}
+
+.card-footer .spacer { flex: 1; }
+
+.card-comments {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-right: 4px;
+}
+
+.card-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-size: 0.9rem;
+  color: var(--text);
+  opacity: 0.6;
+}
+
+.card-btn:hover {
+  opacity: 1;
+  background: var(--border);
+}

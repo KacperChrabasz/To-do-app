@@ -46,7 +46,8 @@
     accent: "blue",
     compact: false,
     completedLast: false,
-    sort: "oldest"
+    sort: "oldest",
+    view: "list"
   };
 
   function loadSettings() {
@@ -139,7 +140,15 @@
       deleteTask: "Delete task",
       openSettings: "Open settings",
       closeSettings: "Close settings",
-      darkMode: "Toggle dark mode"
+      darkMode: "Toggle dark mode",
+      viewList: "List",
+      viewBoard: "Board",
+      col_todo: "To do",
+      col_progress: "In progress",
+      col_review: "In review",
+      col_done: "Done",
+      moveLeft: "Move left",
+      moveRight: "Move right"
     },
     pl: {
       appTitle: "Moje zadania",
@@ -213,7 +222,15 @@
       deleteTask: "Usuń zadanie",
       openSettings: "Otwórz ustawienia",
       closeSettings: "Zamknij ustawienia",
-      darkMode: "Przełącz tryb ciemny"
+      darkMode: "Przełącz tryb ciemny",
+      viewList: "Lista",
+      viewBoard: "Tablica",
+      col_todo: "Do zrobienia",
+      col_progress: "W trakcie",
+      col_review: "W recenzji",
+      col_done: "Gotowe",
+      moveLeft: "Przesuń w lewo",
+      moveRight: "Przesuń w prawo"
     },
     es: {
       appTitle: "Mis tareas",
@@ -287,7 +304,15 @@
       deleteTask: "Borrar tarea",
       openSettings: "Abrir ajustes",
       closeSettings: "Cerrar ajustes",
-      darkMode: "Cambiar modo oscuro"
+      darkMode: "Cambiar modo oscuro",
+      viewList: "Lista",
+      viewBoard: "Tablero",
+      col_todo: "Por hacer",
+      col_progress: "En curso",
+      col_review: "En revisión",
+      col_done: "Hecho",
+      moveLeft: "Mover a la izquierda",
+      moveRight: "Mover a la derecha"
     },
     de: {
       appTitle: "Meine Aufgaben",
@@ -361,7 +386,15 @@
       deleteTask: "Aufgabe löschen",
       openSettings: "Einstellungen öffnen",
       closeSettings: "Einstellungen schließen",
-      darkMode: "Dunkelmodus umschalten"
+      darkMode: "Dunkelmodus umschalten",
+      viewList: "Liste",
+      viewBoard: "Board",
+      col_todo: "Zu erledigen",
+      col_progress: "In Arbeit",
+      col_review: "In Prüfung",
+      col_done: "Erledigt",
+      moveLeft: "Nach links",
+      moveRight: "Nach rechts"
     },
     fr: {
       appTitle: "Mes tâches",
@@ -435,7 +468,15 @@
       deleteTask: "Supprimer la tâche",
       openSettings: "Ouvrir les paramètres",
       closeSettings: "Fermer les paramètres",
-      darkMode: "Activer le mode sombre"
+      darkMode: "Activer le mode sombre",
+      viewList: "Liste",
+      viewBoard: "Tableau",
+      col_todo: "À faire",
+      col_progress: "En cours",
+      col_review: "En revue",
+      col_done: "Terminé",
+      moveLeft: "Déplacer à gauche",
+      moveRight: "Déplacer à droite"
     },
     pt: {
       appTitle: "As minhas tarefas",
@@ -509,7 +550,15 @@
       deleteTask: "Apagar tarefa",
       openSettings: "Abrir definições",
       closeSettings: "Fechar definições",
-      darkMode: "Alternar modo escuro"
+      darkMode: "Alternar modo escuro",
+      viewList: "Lista",
+      viewBoard: "Quadro",
+      col_todo: "Por fazer",
+      col_progress: "Em curso",
+      col_review: "Em revisão",
+      col_done: "Concluído",
+      moveLeft: "Mover para a esquerda",
+      moveRight: "Mover para a direita"
     }
   };
 
@@ -602,7 +651,9 @@
   const counter = document.getElementById("counter");
   const footerInfo = document.getElementById("footerInfo");
   const clearBtn = document.getElementById("clearBtn");
-  const filterButtons = document.querySelectorAll(".filters button");
+  const filterButtons = document.querySelectorAll(".filters button[data-filter]");
+  const viewButtons = document.querySelectorAll("[data-view]");
+  const boardEl = document.getElementById("board");
   const shareBtn = document.getElementById("shareBtn");
   const newListBtn = document.getElementById("newListBtn");
   const myListsUl = document.getElementById("myLists");
@@ -659,8 +710,10 @@
     await addDoc(tasksRef, newTask);
   }
 
+  // Checking the box also moves the task to the "Done" column (and back to "To do" when unchecked)
   async function toggleTask(task) {
-    await updateDoc(taskDoc(task.id), { done: !task.done });
+    const nowDone = !task.done;
+    await updateDoc(taskDoc(task.id), { done: nowDone, status: nowDone ? "done" : "todo" });
   }
 
   async function deleteTask(id) {
@@ -828,7 +881,7 @@
     return panel;
   }
 
-  // ---------- DRAG AND DROP ----------
+  // ---------- DRAG AND DROP (list view) ----------
   // Saves a new order: every task gets a number (0, 1, 2...) that says where it stands in the list
   async function saveOrder(ids) {
     // 1. Update the screen right away, so the task does not jump back
@@ -1241,11 +1294,164 @@
 
     progressFill.style.width = pct + "%";
     progressText.textContent = tasks.length > 0 && pct === 100 ? t("allDone") : t("progress", pct);
+
+    renderBoard();
+  }
+
+  // ---------- BOARD (Jira-style columns) ----------
+  const STATUSES = ["todo", "progress", "review", "done"];
+  let boardDragging = false; // true while a card is being dragged (so live updates don't break the drag)
+
+  // Old tasks have no status yet, so work it out from "done"
+  function getStatus(task) {
+    return task.status || (task.done ? "done" : "todo");
+  }
+
+  async function setStatus(task, status) {
+    await updateDoc(taskDoc(task.id), { status: status, done: status === "done" });
+  }
+
+  function buildCard(task, status) {
+    const card = document.createElement("div");
+    card.className = "board-card" + (status === "done" ? " is-done" : "");
+    card.draggable = true;
+
+    card.addEventListener("dragstart", event => {
+      boardDragging = true;
+      event.dataTransfer.setData("text/plain", task.id);
+      event.dataTransfer.effectAllowed = "move";
+      card.classList.add("dragging");
+    });
+
+    card.addEventListener("dragend", () => {
+      boardDragging = false;
+      renderBoard();
+    });
+
+    const text = document.createElement("div");
+    text.className = "card-text";
+    text.textContent = task.text;
+    card.appendChild(text);
+
+    if (task.tag) {
+      const chip = document.createElement("span");
+      chip.className = "tag tag-" + task.tag;
+      chip.textContent = t("tag_" + task.tag);
+      card.appendChild(chip);
+    }
+
+    const footer = document.createElement("div");
+    footer.className = "card-footer";
+
+    const index = STATUSES.indexOf(status);
+
+    const makeBtn = (label, title, onClick) => {
+      const btn = document.createElement("button");
+      btn.className = "card-btn";
+      btn.textContent = label;
+      btn.title = title;
+      btn.setAttribute("aria-label", title);
+      btn.addEventListener("click", onClick);
+      return btn;
+    };
+
+    if (index > 0) {
+      footer.appendChild(makeBtn("◀", t("moveLeft"), () => setStatus(task, STATUSES[index - 1])));
+    }
+    if (index < STATUSES.length - 1) {
+      footer.appendChild(makeBtn("▶", t("moveRight"), () => setStatus(task, STATUSES[index + 1])));
+    }
+
+    const spacer = document.createElement("span");
+    spacer.className = "spacer";
+    footer.appendChild(spacer);
+
+    const commentCount = (task.comments || []).length;
+    if (commentCount > 0) {
+      const comments = document.createElement("span");
+      comments.className = "card-comments";
+      comments.textContent = "💬 " + commentCount;
+      footer.appendChild(comments);
+    }
+
+    footer.appendChild(makeBtn("✏️", t("editTask"), () => editTask(task)));
+    footer.appendChild(makeBtn("🗑️", t("deleteTask"), () => requestDelete(task.id)));
+
+    card.appendChild(footer);
+    return card;
+  }
+
+  function renderBoard() {
+    if (boardDragging) return;
+
+    boardEl.innerHTML = "";
+
+    // The tag filter and the sort menu from the right sidebar also work on the board
+    let visible = currentTag === "all" ? tasks : tasks.filter(task => task.tag === currentTag);
+    visible = sortTasks(visible);
+
+    STATUSES.forEach(status => {
+      const col = document.createElement("section");
+      col.className = "board-col col-" + status;
+
+      const items = visible.filter(task => getStatus(task) === status);
+
+      const head = document.createElement("div");
+      head.className = "col-head";
+
+      const dot = document.createElement("span");
+      dot.className = "col-dot";
+
+      const title = document.createElement("span");
+      title.textContent = t("col_" + status) + (status === "done" ? " ✓" : "");
+
+      const count = document.createElement("span");
+      count.className = "col-count";
+      count.textContent = items.length;
+
+      head.append(dot, title, count);
+
+      const cards = document.createElement("div");
+      cards.className = "col-cards";
+
+      if (items.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "col-empty";
+        empty.textContent = "—";
+        cards.appendChild(empty);
+      }
+
+      items.forEach(task => cards.appendChild(buildCard(task, status)));
+
+      // The column accepts dropped cards
+      col.addEventListener("dragover", event => {
+        event.preventDefault();
+        col.classList.add("drag-over");
+      });
+
+      col.addEventListener("dragleave", event => {
+        if (!col.contains(event.relatedTarget)) col.classList.remove("drag-over");
+      });
+
+      col.addEventListener("drop", event => {
+        event.preventDefault();
+        col.classList.remove("drag-over");
+        const id = event.dataTransfer.getData("text/plain");
+        const task = tasks.find(item => item.id === id);
+        if (task && getStatus(task) !== status) setStatus(task, status);
+      });
+
+      col.append(head, cards);
+      boardEl.appendChild(col);
+    });
   }
 
   // ---------- SETTINGS PANEL ----------
   // Puts every translated text on the page, and the saved settings into the controls
   function applySettings() {
+    document.body.classList.toggle("board-mode", settings.view === "board");
+    viewButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.view === settings.view));
+
     document.documentElement.lang = settings.lang;
     document.documentElement.dataset.size = settings.size;
     document.documentElement.dataset.density = settings.compact ? "compact" : "normal";
@@ -1329,6 +1535,14 @@
       filterButtons.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       render();
+    });
+  });
+
+  viewButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      settings.view = btn.dataset.view;
+      saveSettings();
+      applySettings();
     });
   });
 

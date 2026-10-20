@@ -8,7 +8,6 @@
 </head>
 <body>
   <div class="layout">
-    <!-- DIV = an invisible box that holds other things -->
 
     <main class="app">
 
@@ -21,11 +20,8 @@
         </div>
 
         <label class="switch" data-i18n-aria="darkMode" aria-label="Toggle dark mode">
-          <!-- LABEL = a name for something. Click the name and the thing inside reacts too -->
           <input type="checkbox" id="themeToggle">
-          <!-- INPUT = a place where you write or tick. This one is a tick box -->
           <span class="slider"></span>
-          <!-- SPAN = a tiny invisible box. This one is the little switch you slide -->
         </label>
       </header>
 
@@ -41,11 +37,15 @@
         <button id="newListBtn" data-i18n="newList">➕ New list</button>
       </div>
 
+      <div class="filters view-switch">
+        <button data-view="list" data-i18n="viewList">List</button>
+        <button data-view="board" data-i18n="viewBoard">Board</button>
+      </div>
+
       <div class="add-row">
         <input type="text" id="taskInput" data-i18n-placeholder="addPlaceholder" placeholder="Add a new task..." maxlength="100" autocomplete="off">
 
         <select id="tagSelect" class="tag-select" data-i18n-aria="tagLabel" aria-label="Tag">
-          <!-- TAG SELECT = a small menu next to the input. It picks the category for the NEW task -->
           <option value="" data-i18n="tagNone">No tag</option>
           <option value="work" data-i18n="tag_work">Work</option>
           <option value="school" data-i18n="tag_school">School</option>
@@ -65,6 +65,8 @@
 
       <ul id="taskList"></ul>
 
+      <div id="board" class="board"></div>
+
       <footer>
         <span id="footerInfo"></span>
         <button id="clearBtn" data-i18n="clearCompleted">Clear completed</button>
@@ -75,18 +77,15 @@
   </div>
 
   <aside class="sidebar" id="sidebarLeft">
-    <!-- LEFT SIDEBAR = a box that hides on the left side of the screen and slides out when you move to the left edge -->
     <h2 class="sidebar-title" data-i18n="myLists">📋 My lists</h2>
     <ul id="myLists"></ul>
   </aside>
 
   <aside class="sidebar-right" id="sidebarRight">
-    <!-- RIGHT SIDEBAR = a box that hides on the right side of the screen. It holds the tag filters and the sort menu -->
 
     <div class="side-section">
       <h2 class="sidebar-title" data-i18n="tagLabel">Tag</h2>
       <div class="tag-filters" id="tagFilters"></div>
-      <!-- TAG FILTERS = an empty box. The JavaScript fills it with little buttons, one for each tag -->
     </div>
 
     <div class="side-section">
@@ -97,17 +96,14 @@
         <option value="az" data-i18n="sortAz">A → Z</option>
         <option value="za" data-i18n="sortZa">Z → A</option>
         <option value="manual" data-i18n="sortManual">My order (drag)</option>
-        <!-- MANUAL = the order you made by dragging the ⋮⋮ handle on the tasks -->
       </select>
     </div>
   </aside>
 
   <div class="edge-zone edge-left" id="edgeLeft" role="button" tabindex="0" data-i18n-aria="myLists" aria-label="My lists"></div>
   <div class="edge-zone edge-right" id="edgeRight" role="button" tabindex="0" data-i18n-aria="tagLabel" aria-label="Tag"></div>
-  <!-- EDGE ZONE = a thin strip at the edge of the screen. It shows a little glowing line, and moving the mouse there (or swiping from there) opens the sidebar -->
 
   <div class="side-overlay" id="sideOverlay"></div>
-  <!-- SIDE OVERLAY = an invisible cover over the page while a sidebar is open. Tapping it closes the sidebar -->
 
   <!-- SETTINGS PANEL -->
   <div class="settings-overlay" id="settingsOverlay"></div>
@@ -121,7 +117,6 @@
     <label class="setting-row">
       <span data-i18n="language">Language</span>
       <select id="languageSelect">
-        <!-- SELECT = a menu where you pick one choice from a list -->
         <option value="en">English</option>
         <option value="pl">Polski</option>
         <option value="es">Español</option>
