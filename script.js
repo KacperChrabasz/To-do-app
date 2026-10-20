@@ -772,9 +772,10 @@
 
     render();
 
-    // When opening, put the cursor in the comment field
+    // When opening, put the cursor in the comment field (in whichever view is visible)
     if (opening) {
-      const field = taskList.querySelector(`[data-focus-key="text-${taskId}"]`);
+      const box = settings.view === "board" ? boardEl : taskList;
+      const field = box.querySelector(`[data-focus-key="text-${taskId}"]`);
       if (field) field.focus();
     }
   }
@@ -1172,7 +1173,7 @@
     // Remember which field the person is typing in, so a live update does not take it away
     const active = document.activeElement;
     let restore = null;
-    if (active && active.dataset && active.dataset.focusKey) {
+    if (taskList.contains(active) && active.dataset && active.dataset.focusKey) {
       restore = { key: active.dataset.focusKey, pos: active.selectionStart };
     }
 
@@ -1314,7 +1315,8 @@
   function buildCard(task, status) {
     const card = document.createElement("div");
     card.className = "board-card" + (status === "done" ? " is-done" : "");
-    card.draggable = true;
+    // A card with its comment box open can't be dragged, so you can still select text in the inputs
+    card.draggable = !openComments.has(task.id);
 
     card.addEventListener("dragstart", event => {
       boardDragging = true;
@@ -1366,23 +1368,38 @@
     spacer.className = "spacer";
     footer.appendChild(spacer);
 
+    // The 💬 button opens the comment box under the card
     const commentCount = (task.comments || []).length;
-    if (commentCount > 0) {
-      const comments = document.createElement("span");
-      comments.className = "card-comments";
-      comments.textContent = "💬 " + commentCount;
-      footer.appendChild(comments);
-    }
+    const commentBtn = makeBtn(
+      commentCount > 0 ? "💬 " + commentCount : "💬",
+      t("comments"),
+      () => toggleComments(task.id)
+    );
+    if (commentCount > 0) commentBtn.classList.add("has-comments");
+    footer.appendChild(commentBtn);
 
     footer.appendChild(makeBtn("✏️", t("editTask"), () => editTask(task)));
     footer.appendChild(makeBtn("🗑️", t("deleteTask"), () => requestDelete(task.id)));
 
     card.appendChild(footer);
+
+    // The comment box, only if it is open for this task
+    if (openComments.has(task.id)) {
+      card.appendChild(buildCommentsPanel(task));
+    }
+
     return card;
   }
 
   function renderBoard() {
     if (boardDragging) return;
+
+    // Remember which comment field is being typed in, so a live update does not take it away
+    const active = document.activeElement;
+    let restore = null;
+    if (boardEl.contains(active) && active.dataset && active.dataset.focusKey) {
+      restore = { key: active.dataset.focusKey, pos: active.selectionStart };
+    }
 
     boardEl.innerHTML = "";
 
@@ -1444,6 +1461,17 @@
       col.append(head, cards);
       boardEl.appendChild(col);
     });
+
+    // Put the cursor back where the person was typing
+    if (restore) {
+      const field = boardEl.querySelector(`[data-focus-key="${restore.key}"]`);
+      if (field) {
+        field.focus();
+        try {
+          field.setSelectionRange(restore.pos, restore.pos);
+        } catch (e) {}
+      }
+    }
   }
 
   // ---------- SETTINGS PANEL ----------

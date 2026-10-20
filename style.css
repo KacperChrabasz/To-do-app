@@ -102,7 +102,6 @@ html[data-size="large"] { font-size: 19px; }
 }
 
 /* ---------- SLIDING SIDEBARS ---------- */
-/* Both sidebars wait just outside the screen. The class "open" slides them in */
 .sidebar,
 .sidebar-right {
   position: fixed;
@@ -115,7 +114,7 @@ html[data-size="large"] { font-size: 19px; }
   -webkit-backdrop-filter: blur(18px);
   overflow-y: auto;
   z-index: 20;
-  visibility: hidden; /* a hidden sidebar can not be clicked or tabbed into */
+  visibility: hidden;
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
               box-shadow 0.4s ease,
               visibility 0s linear 0.4s;
@@ -156,7 +155,6 @@ html[data-size="large"] { font-size: 19px; }
   margin-bottom: 28px;
 }
 
-/* The thin strips at the screen edges. They show a glowing line and catch taps and swipes */
 .edge-zone {
   position: fixed;
   top: 0;
@@ -164,7 +162,7 @@ html[data-size="large"] { font-size: 19px; }
   width: 14px;
   z-index: 15;
   cursor: pointer;
-  touch-action: none; /* stops the phone from scrolling when you swipe from the strip */
+  touch-action: none;
   transition: opacity 0.3s ease;
 }
 
@@ -202,7 +200,6 @@ html[data-size="large"] { font-size: 19px; }
   pointer-events: none;
 }
 
-/* The invisible cover that closes the sidebar when you tap outside of it */
 .side-overlay {
   position: fixed;
   inset: 0;
@@ -215,7 +212,6 @@ html[data-size="large"] { font-size: 19px; }
   pointer-events: auto;
 }
 
-/* On touch screens, the strips are wider and the page dims a little while a sidebar is open */
 @media (pointer: coarse) {
   .edge-zone {
     width: 22px;
@@ -416,7 +412,7 @@ h1 {
   flex: 1;
   min-width: 0;
   padding: 15px 18px;
-  font-size: 16px; /* 16px stops the iPhone from zooming in */
+  font-size: 16px;
   font-family: inherit;
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -454,7 +450,6 @@ h1 {
   box-shadow: 0 12px 26px rgba(91, 108, 255, 0.45);
 }
 
-/* the small tag menu inside the add row */
 .add-row .tag-select {
   width: 118px;
   flex-shrink: 0;
@@ -565,7 +560,7 @@ h1 {
 
 #taskList li {
   display: flex;
-  flex-wrap: wrap; /* lets the comment box drop to its own line under the task */
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   background: var(--card);
@@ -610,7 +605,6 @@ h1 {
   color: var(--muted);
 }
 
-/* 💬 ✏️ 🗑️ buttons on each task (only the direct children of the task) */
 #taskList li > button {
   background: none;
   border: none;
@@ -634,7 +628,6 @@ h1 {
   background: rgba(229, 72, 77, 0.14);
 }
 
-/* the 💬 button grows a little when it shows a number */
 #taskList li > .comment-btn {
   width: auto;
   min-width: 34px;
@@ -657,7 +650,6 @@ h1 {
 }
 
 /* ---------- DRAG AND DROP ---------- */
-/* the ⋮⋮ handle you grab */
 .drag-handle {
   flex-shrink: 0;
   width: 18px;
@@ -671,7 +663,7 @@ h1 {
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: none; /* stops the phone from scrolling when you drag the handle */
+  touch-action: none;
   opacity: 0.55;
   transition: color 0.2s ease, opacity 0.2s ease;
 }
@@ -684,7 +676,6 @@ h1 {
   color: var(--accent);
 }
 
-/* the task you are holding */
 #taskList li.dragging {
   position: relative;
   z-index: 30;
@@ -701,7 +692,6 @@ h1 {
   opacity: 1;
 }
 
-/* the colored line that shows where the task will land */
 #taskList li.drop-before {
   box-shadow: 0 -5px 0 0 var(--accent);
 }
@@ -1031,7 +1021,6 @@ footer button:hover {
   transform: rotate(90deg);
 }
 
-/* each setting is a card */
 .setting-row {
   display: flex;
   justify-content: space-between;
@@ -1056,7 +1045,6 @@ footer button:hover {
   border-color: var(--accent);
 }
 
-/* dropdowns */
 .setting-row select {
   appearance: none;
   -webkit-appearance: none;
@@ -1082,7 +1070,6 @@ footer button:hover {
   box-shadow: 0 0 0 3px rgba(91, 108, 255, 0.2);
 }
 
-/* on/off switch for the checkboxes */
 .setting-row input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
@@ -1122,7 +1109,6 @@ footer button:hover {
   transform: translateX(20px);
 }
 
-/* small footer note at the bottom of the panel */
 .settings-panel::after {
   content: "Settings are saved on this device";
   margin-top: auto;
@@ -1264,7 +1250,6 @@ footer button:hover {
     width: 96px;
   }
 
-  /* 16px stops the iPhone from zooming in when you tap a comment field */
   .comment-form input {
     font-size: 16px;
   }
@@ -1274,29 +1259,6 @@ footer button:hover {
   }
 }
 
-/* ---------- REDUCED MOTION (for people who turned off animations) ---------- */
-@media (prefers-reduced-motion: reduce) {
-  body::after,
-  .milestone,
-  .milestone-icon,
-  .progress-fill.pulse,
-  .progress-fill.shine,
-  .progress-fill.shine::after {
-    animation: none !important;
-  }
-
-  .sidebar,
-  .sidebar-right,
-  .edge-zone::after {
-    transition: none !important;
-  }
-
-  #taskList li:hover,
-  .share-row button:hover,
-  .add-row button:hover {
-    transform: none;
-  }
-}
 /* ---------- BOARD VIEW (Jira-style columns) ---------- */
 body.board-mode .app { max-width: 1180px; }
 body:not(.board-mode) #board { display: none; }
@@ -1412,13 +1374,6 @@ body.board-mode .filters:not(.view-switch) { display: none; }
 
 .card-footer .spacer { flex: 1; }
 
-.card-comments {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--accent);
-  margin-right: 4px;
-}
-
 .card-btn {
   width: 30px;
   height: 30px;
@@ -1433,4 +1388,42 @@ body.board-mode .filters:not(.view-switch) { display: none; }
 .card-btn:hover {
   opacity: 1;
   background: var(--border);
+}
+
+.card-btn.has-comments {
+  opacity: 1;
+  width: auto;
+  padding: 0 8px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* the comment box is narrow inside a card, so the name goes on its own line */
+.board-card .comments { margin-top: 10px; }
+.board-card .comment-form { flex-wrap: wrap; }
+.board-card .comment-name { width: 100%; }
+.board-card .comment-input { flex: 1; min-width: 0; }
+
+/* ---------- REDUCED MOTION (for people who turned off animations) ---------- */
+@media (prefers-reduced-motion: reduce) {
+  body::after,
+  .milestone,
+  .milestone-icon,
+  .progress-fill.pulse,
+  .progress-fill.shine,
+  .progress-fill.shine::after {
+    animation: none !important;
+  }
+
+  .sidebar,
+  .sidebar-right,
+  .edge-zone::after {
+    transition: none !important;
+  }
+
+  #taskList li:hover,
+  .share-row button:hover,
+  .add-row button:hover {
+    transform: none;
+  }
 }
